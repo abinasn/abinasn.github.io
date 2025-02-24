@@ -2,11 +2,11 @@ import { createHashRouter, RouterProvider } from "react-router-dom";
 
 import Layout from "./layout";
 import Home from "./home";
-import About from "./about";
 import Skill from "./skills";
 import Work from "./work";
 import Contact from "./contact";
 import Resume from "./resume";
+import { ThemeProvider } from "./hooks/theme";
 
 const router = createHashRouter([
   {
@@ -14,7 +14,6 @@ const router = createHashRouter([
     element: <Layout />,
     children: [
       { path: "/", element: <Home /> },
-      { path: "/about", element: <About /> },
       { path: "/skill", element: <Skill /> },
       { path: "/work", element: <Work /> },
       { path: "/contact", element: <Contact /> },
@@ -24,5 +23,9 @@ const router = createHashRouter([
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  );
 }

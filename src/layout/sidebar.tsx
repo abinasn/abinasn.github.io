@@ -1,6 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  HomeIcon,
   UserIcon,
   LightBulbIcon,
   BriefcaseIcon,
@@ -8,15 +7,14 @@ import {
   CodeBracketSquareIcon
 } from '@heroicons/react/24/outline';
 import ProfileImage from "../assets/images/me.jpeg"
-import Theme from "./theme";
+import ThemeSelector from "./theme-selector";
 import SocialMedia from "./social-media";
 
 export default function Sidebar() {
   const location = useLocation();
   
   const navItems = [
-    { path: "/", icon: HomeIcon, label: "Home" },
-    { path: "/about", icon: UserIcon, label: "About" },
+    { path: "/", icon: UserIcon, label: "About" },
     { path: "/skill", icon: LightBulbIcon, label: "Skills" },
     { path: "/work", icon: BriefcaseIcon, label: "Work" },
     { path: "/resume", icon: CodeBracketSquareIcon, label: "Resume" },
@@ -40,7 +38,7 @@ export default function Sidebar() {
               to={path}
               className={`flex items-center gap-2 transition-colors px-3 py-2 rounded-md 
                 ${location.pathname === path 
-                  ? 'dark:bg-stone-800 dark:text-slate-300 bg-slate-200 text-slate-700 font-medium' 
+                  ? 'dark:bg-stone-800 dark:text-slate-300 bg-slate-200 text-slate-700' 
                   : 'dark:hover:bg-stone-800 dark:hover:text-stone-400 hover:bg-slate-200 hover:text-slate-700'
                 }`}
             >
@@ -50,7 +48,7 @@ export default function Sidebar() {
           </li>
         ))}
       </ul>
-			<Theme />
+			<ThemeSelector />
     </nav>
   );
 }

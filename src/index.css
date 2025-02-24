@@ -23,12 +23,6 @@
   font-display: swap;
 }
 
-@layer base {
-  html, body {
-    @apply overflow-clip;
-  }
-}
-
 
 @theme {
   --font-sans: 'Inter', sans-serif;
@@ -37,12 +31,13 @@
 
   --font-light: 'Inter ExtraLight', sans-serif;
 
-  --animate-texts: fadeUp 1s ease-out forwards;
+  --animate-texts: fadeUp 0.8s ease-out forwards;
+  --animate-home-borders-fadeIn: fadeIn 0.5s ease-in forwards;
 
   @keyframes fadeUp {
     0%{
       opacity: 0; 
-      transform: translateY(50px);
+      transform: translateY(30px);
     }
 
     100%{
@@ -50,4 +45,16 @@
       transform: translateY(0);
     }
   }
+
+  @keyframes fadeIn {
+    0%{
+      opacity: 0; 
+    }
+
+    100%{
+      opacity: 1; 
+    }
+  }
+
+
 }
