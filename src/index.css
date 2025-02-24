@@ -23,6 +23,11 @@
   font-display: swap;
 }
 
+@layer base {
+  html, body {
+    @apply overflow-clip;
+  }
+}
 
 
 @theme {
@@ -31,4 +36,18 @@
   --font-mono: 'Inter', monospace;
 
   --font-light: 'Inter ExtraLight', sans-serif;
+
+  --animate-texts: fadeUp 1s ease-out forwards;
+
+  @keyframes fadeUp {
+    0%{
+      opacity: 0; 
+      transform: translateY(50px);
+    }
+
+    100%{
+      opacity: 1; 
+      transform: translateY(0);
+    }
+  }
 }

@@ -9,7 +9,7 @@ export default function Layout() {
       </div>
 
       <div className="flex-1 ml-64">
-        <div className="min-h-screen p-4 text-slate-700 dark:text-slate-300 dark:bg-black">
+        <div className="min-h-screen text-slate-700 dark:text-slate-300 dark:bg-black">
           <Outlet />
         </div>
       </div>
