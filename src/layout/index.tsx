@@ -1,14 +1,17 @@
 import { Outlet } from "react-router-dom";
-
 import Sidebar from "./sidebar";
 
 export default function Layout() {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
+    <div className="flex">
+      <div className="fixed h-screen">
+        <Sidebar />
+      </div>
 
-      <div className="flex-1 p-4 dark:text-white dark:bg-black">
-        <Outlet />
+      <div className="flex-1 ml-64">
+        <div className="min-h-screen p-4 text-slate-700 dark:text-slate-300 dark:bg-black">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

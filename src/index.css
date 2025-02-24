@@ -2,10 +2,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @font-face {
-  font-family: 'Inter Light';
-  src: url('./assets/fonts/Inter_Light.ttf') format("truetype");
+  font-family: 'Inter ExtraLight';
+  src: url('./assets/fonts/Inter_ExtraLight.ttf') format("truetype");
   font-style: normal;
+  font-display: swap;
 }
+
 
 @font-face {
   font-family: 'Inter';
@@ -27,4 +29,6 @@
   --font-sans: 'Inter', sans-serif;
   --font-serif: 'Inter', serif;
   --font-mono: 'Inter', monospace;
+
+  --font-light: 'Inter ExtraLight', sans-serif;
 }
