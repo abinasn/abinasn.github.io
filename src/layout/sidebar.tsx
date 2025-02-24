@@ -25,7 +25,7 @@ export default function Sidebar() {
 
   return (
     <nav className="w-64 h-full p-4 dark:text-slate-300 dark:bg-black dark:border-r-stone-800 bg-white border-r-slate-100 text-slate-700 border-r-1 flex flex-col">
-      <div className="mb-8 mt-8">
+      <div className="mb-6 mt-8">
         <div className="w-50 h-50 rounded-full mx-auto mb-4">
           <img src={ProfileImage} alt="Profile" className="w-full h-full rounded-full object-cover" />
         </div>

@@ -40,7 +40,7 @@ const socialIcons = [
 
 function SocialMedia() {
   return (
-    <div className="flex items-center justify-center gap-2 mt-4 ">
+    <div className="flex items-center justify-center gap-2 mt-4">
       {socialIcons.map(ico => (
         <a target="_blank" href={ico.link} key={ico.key} className="w-8 h-8 border-1 cursor-pointer hover:bg-slate-300 dark:hover:bg-stone-600 rounded-4xl flex items-center justify-center dark:bg-stone-800 dark:border-gray-800 bg-gray-200 border-gray-200">
           {ico.icon}
