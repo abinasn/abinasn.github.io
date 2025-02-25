@@ -5,7 +5,7 @@ export default function Layout() {
   return (
     <div className="relative">
       <div className="flex flex-col md:flex-row">
-        <div className="md:fixed md:w-64 z-10">
+        <div className="md:fixed md:w-64 z-20">
           <Sidebar />
         </div>
 

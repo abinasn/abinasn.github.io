@@ -40,24 +40,22 @@ export function Background() {
 export function BackgroundIllustration() {
   const generateRandomShapes = (count: number) => {
     const shapes = [];
-    
+
     for (let i = 0; i < count; i++) {
-      const type = ["circle", "square", "triangle", "rect"][Math.floor(Math.random() * 4)];
-      const x = Math.random() * 100; // % position
-      const y = Math.random() * 100; // % position
+      const x = Math.random() * 100;
+      const y = Math.random() * 100;
       const size = Math.random() * 10;
       const hue = Math.floor(Math.random() * 360);
-      
+
       shapes.push({
         id: i,
-        type,
         x: `${x}%`,
         y: `${y}%`,
         size,
         fill: `hsla(${hue}, 70%, 60%, 0.2)`,
       });
     }
-    
+
     return shapes;
   };
 
@@ -70,26 +68,13 @@ export function BackgroundIllustration() {
       <div className="absolute inset-0 backdrop-blur-[100px]">
         <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
           {shapes.map((shape) => (
-            shape.type === "circle" ? (
-              <circle
-                key={shape.id}
-                cx={shape.x}
-                cy={shape.y}
-                r={shape.size}
-                fill={shape.fill}
-              />
-            ) : (
-              <rect
-                key={shape.id}
-                x={shape.x}
-                y={shape.y}
-                width={shape.size}
-                height={shape.size}
-                fill={shape.fill}
-                rx="20"
-                ry="20"
-              />
-            )
+            <circle
+              key={shape.id}
+              cx={shape.x}
+              cy={shape.y}
+              r={shape.size}
+              fill={shape.fill}
+            />
           ))}
         </svg>
       </div>
