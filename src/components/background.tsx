@@ -59,7 +59,7 @@ export function BackgroundIllustration() {
     return shapes;
   };
 
-  const shapes = generateRandomShapes(20);
+  const shapes = generateRandomShapes(30);
 
 
 

@@ -6,7 +6,7 @@ const SkillTree = () => {
         { name: "HTML", level: 90 },
         { name: "CSS", level: 75 },
         { name: "JavaScript", level: 70 },
-        { name: "React", level: 75 }
+        { name: "React.js", level: 75 }
       ]
     },
     {
@@ -53,7 +53,7 @@ const SkillTree = () => {
   ];
 
   return (
-    <div className="w-full py-8">
+    <div className="w-full py-8 font-light text-sm">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {skills.map((category, idx) => (
           <div 
@@ -61,7 +61,7 @@ const SkillTree = () => {
             className="bg-white dark:bg-stone-900 rounded-md shadow-md overflow-hidden transition-transform hover:scale-105"
           >
             <div 
-              className={`p-4 text-xl font-bold bg-slate-200 dark:bg-stone-800`}
+              className={`p-4 text-lg font-bold bg-slate-200 dark:bg-stone-800`}
             >
               {category.category}
             </div>
