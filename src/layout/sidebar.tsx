@@ -5,13 +5,13 @@ import {
   LightBulbIcon,
   BriefcaseIcon,
   EnvelopeIcon,
-  CodeBracketSquareIcon,
+  // CodeBracketSquareIcon,
   XMarkIcon,
   Bars3Icon
 } from '@heroicons/react/24/outline';
 import ProfileImage from "../assets/images/me.jpeg"
 import ThemeSelector from "./theme-selector";
-import SocialMedia from "./social-media";
+import SocialMedia from "../components/social-media";
 import Button from "../components/button";
 
 export default function Sidebar() {
@@ -23,7 +23,7 @@ export default function Sidebar() {
     { path: "/", icon: UserIcon, label: "About" },
     { path: "/skill", icon: LightBulbIcon, label: "Skills" },
     { path: "/work", icon: BriefcaseIcon, label: "Work" },
-    { path: "/resume", icon: CodeBracketSquareIcon, label: "Resume" },
+    // { path: "/resume", icon: CodeBracketSquareIcon, label: "Resume" },
     { path: "/contact", icon: EnvelopeIcon, label: "Contact" },
   ];
   return (
