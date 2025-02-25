@@ -1,33 +1,33 @@
-import { ArrowRightIcon, BriefcaseIcon, LightBulbIcon } from "@heroicons/react/24/outline";
+import { BriefcaseIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 import Button from "../components/button";
 
-const keyPoints = [
-  {
-    key: "frontend",
-    name: "Frontend",
-    description: "Expertise in React.js, Next.js, and modern JavaScript, building dynamic, responsive, and user-friendly interfaces."
-  },
-  {
-    key: "backend",
-    name: "Backend",
-    description: "Proficient in Node.js and Express.js, developing robust, scalable, and high-performance server-side applications with a strong focus on Test-Driven Development (TDD)."
-  },
-  {
-    key: "database",
-    name: "Database",
-    description: "Experienced in SQL and NoSQL databases ensuring efficient data management, optimization, and scalability."
-  },
-  {
-    key: "deployment",
-    name: "deployment",
-    description: "Moderate amount of experience in CI/CD, Docker, and cloud platforms like AWS, Vercel, and Firebase for seamless application deployment."
-  },
-  {
-    key: "other",
-    name: "Other",
-    description: 'Demonstrated success as an individual contributor, technical lead, and team lead, with a strong ability to mentor, guide teams, and solve complex problems effectively.'
-  }
-]
+// const keyPoints = [
+//   {
+//     key: "frontend",
+//     name: "Frontend",
+//     description: "Expertise in React.js, Next.js, and modern JavaScript, building dynamic, responsive, and user-friendly interfaces."
+//   },
+//   {
+//     key: "backend",
+//     name: "Backend",
+//     description: "Proficient in Node.js and Express.js, developing robust, scalable, and high-performance server-side applications with a strong focus on Test-Driven Development (TDD)."
+//   },
+//   {
+//     key: "database",
+//     name: "Database",
+//     description: "Experienced in SQL and NoSQL databases ensuring efficient data management, optimization, and scalability."
+//   },
+//   {
+//     key: "deployment",
+//     name: "deployment",
+//     description: "Moderate amount of experience in CI/CD, Docker, and cloud platforms like AWS, Vercel, and Firebase for seamless application deployment."
+//   },
+//   {
+//     key: "other",
+//     name: "Other",
+//     description: 'Demonstrated success as an individual contributor, technical lead, and team lead, with a strong ability to mentor, guide teams, and solve complex problems effectively.'
+//   }
+// ]
 
 export default function Left() {
   const handleClick = () => {
