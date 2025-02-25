@@ -1,20 +1,24 @@
+import BorderDesign from '../components/border-design';
+import { Background, BackgroundIllustration } from "../components/background";
 import Left from './left';
+// import Right from './right';
 
 function Home() {
   return (
-    <div className="md:relative h-screen flex items-center justify-start px-4 md:px-24">
-      <div className="absolute top-10 left-0 right-0 border-b-2 border-dashed animate-dotted-border border-slate-200 dark:border-stone-900 animate-home-borders-fadeIn"></div>
-      <div className="absolute top-12 left-0 right-0 border-b-2 border-dashed animate-dotted-border border-slate-200 dark:border-stone-900 animate-home-borders-fadeIn"></div>
-      <div className="h-full hidden md:block absolute left-10 top-0 bottom-0 border-l-2 border-dashed animate-dotted-border border-slate-200 dark:border-stone-900 mx-4 animate-home-borders-fadeIn"></div>
-      <div className="h-full hidden md:block absolute left-12 top-0 bottom-0 border-l-2 border-dashed animate-dotted-border border-slate-200 dark:border-stone-900 mx-4 animate-home-borders-fadeIn"></div>
-
-      <div className='flex gap-8 md:gap-16 lg:gap-24 items-center'>
-        <Left />
-      </div>
-
-      <div className="absolute bottom-10 left-0 right-0 border-b-2 border-dashed animate-dotted-border border-slate-200 dark:border-stone-900 animate-home-borders-fadeIn"></div>
-      <div className="absolute bottom-12 left-0 right-0 border-b-2 border-dashed animate-dotted-border border-slate-200 dark:border-stone-900 animate-home-borders-fadeIn"></div>
-    </div>
+    <BorderDesign>
+      <>
+        <BackgroundIllustration />
+        <Background />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full mx-auto">
+          <div className="order-2 md:order-1">
+            <Left />
+          </div>
+          <div className="order-1 md:order-2">
+            {/* <Right /> */}
+          </div>
+        </div>
+      </>
+    </BorderDesign>
   );
 }
 
