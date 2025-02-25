@@ -8,7 +8,7 @@ export default function Layout() {
         <Sidebar />
       </div>
 
-      <div className="flex-1 md:ml-64">
+      <div className="flex-1 md:ml-64 relative -z-10">
         <div className="min-h-screen text-slate-700 dark:text-slate-300 dark:bg-black">
           <Outlet />
         </div>

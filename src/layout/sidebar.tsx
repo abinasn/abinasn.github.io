@@ -27,17 +27,23 @@ export default function Sidebar() {
     { path: "/contact", icon: EnvelopeIcon, label: "Contact" },
   ];
   return (
-    <div className="w-screen h-screen relative">
+    <div className="w-screen h-screen">
       <Button
-        className="md:hidden absolute z-1000 top-6 bg-gray-800 text-white p-2 rounded-md right-4"
+        className="md:hidden absolute z-10 top-4 right-4"
         onClick={() => setOpen(!open)}
-        variant="default"
+        variant="primary"
       >
         {open ? <XMarkIcon className="size-6" /> : <Bars3Icon className="size-6" />}
       </Button>
-      <nav 
+      {open && (
+        <div
+          className="fixed inset-0 bg-black opacity-50 z-40 md:hidden"
+          onClick={() => setOpen(false)}
+        ></div>
+      )}
+      <nav
         className={`w-64 h-full p-4 dark:text-slate-300 dark:bg-black dark:border-r-stone-800 bg-white border-r-slate-100 text-slate-700 border-r-1 flex flex-col
-           transform transition-transform duration-300 ease-in-out 
+           transform transition-transform duration-300 ease-in-out fixed z-50
           ${open ? "translate-x-0" : "-translate-x-64"} md:translate-x-0`}
       >
         <div className="mb-6 mt-8">
