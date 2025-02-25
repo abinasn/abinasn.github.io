@@ -27,9 +27,9 @@ export default function Sidebar() {
     { path: "/contact", icon: EnvelopeIcon, label: "Contact" },
   ];
   return (
-    <div className="w-screen h-screen">
+    <div className="w-64 h-full">
       <Button
-        className="md:hidden absolute z-10 top-4 right-4"
+        className="md:hidden fixed z-10 top-4 right-4"
         onClick={() => setOpen(!open)}
         variant="primary"
       >
