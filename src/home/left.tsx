@@ -1,10 +1,12 @@
 import { BriefcaseIcon, LightBulbIcon } from "@heroicons/react/24/outline";
+import { useNavigate } from "react-router-dom";
 import Button from "../components/button";
 
 
 export default function Left() {
-  const handleClick = () => {
-
+  const navigate = useNavigate();
+  const handleClick = (route: string) => {
+    navigate(route)
   }
   return (
     <div className="flex flex-col animate-texts">
@@ -22,11 +24,11 @@ export default function Left() {
       
 
       <div className='flex gap-4'>
-        <Button onClick={handleClick} variant="primary" className="mt-4">
+        <Button onClick={()=>handleClick("/skill")} variant="primary" className="mt-4">
           <LightBulbIcon className='w-4 h-4 font-sans' />
           Skills
         </Button>
-        <Button onClick={handleClick} variant="primary" className="mt-4">
+        <Button onClick={()=>handleClick("/work")} variant="primary" className="mt-4">
           <BriefcaseIcon className='w-4 h-4 font-sans' />
           Experience
         </Button>
