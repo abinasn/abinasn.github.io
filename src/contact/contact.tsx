@@ -20,24 +20,22 @@ export default function ContactCard() {
     }
   ]
   return (
-    <div className="w-full md:p-32 min-h-[400px] flex rounded-md shadow-md bg-slate-200 dark:bg-stone-800 p-8 mx-auto my-6">
+    <div className="w-full flex justify-center">
       <div className="mb-6 mt-8">
-        <div className="w-50 h-50 rounded-full mx-auto mb-4">
+        <div className="w-60 h-60 rounded-full mx-auto mb-4">
           <img src={ContactImage} alt="Profile" className="w-full h-full rounded-full object-cover" />
         </div>
-        <p className="text-2xl text-center">Abinas Patra</p>
+        <p className="text-4xl text-center">Abinas Patra</p>
         <SocialMedia />
-        <ul className="list-none space-y-2 mt-4 inline-block">
+        <ul className="list-none space-y-2 mt-4">
           {infoArr.map(({ value, icon: Icon }, i) => (
-            <li key={i.toString()} className="flex items-start gap-3">
+            <li key={i.toString()} className="flex items-start justify-center gap-1">
               <Icon className="size-4 mt-1" />
               <span>{value}</span>
             </li>
           ))}
         </ul>
       </div>
-
-
     </div>
   )
 }

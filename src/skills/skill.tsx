@@ -1,4 +1,12 @@
+import { BriefcaseIcon } from "@heroicons/react/24/outline";
+import Button from "../components/button";
+import { useNavigate } from "react-router-dom";
+
 const SkillTree = () => {
+  const navigate = useNavigate();
+  const handleClick = (route: string) => {
+    navigate(route)
+  }
   const skills = [
     {
       category: "Frontend",
@@ -14,14 +22,14 @@ const SkillTree = () => {
       skills: [
         { name: "Node.js", level: 75 },
         { name: "Express", level: 80 },
-        { name: "Nestjs", level: 50}
+        { name: "Nestjs", level: 50 }
       ]
     },
     {
       category: "DevOps",
       skills: [
         { name: "Docker", level: 70 },
-        { name: "Kubernetes", level: 40},
+        { name: "Kubernetes", level: 40 },
         { name: "CI/CD", level: 65 },
         { name: "AWS", level: 50 },
       ]
@@ -56,11 +64,11 @@ const SkillTree = () => {
     <div className="w-full py-8 font-light text-sm">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {skills.map((category, idx) => (
-          <div 
+          <div
             key={idx}
             className="bg-white dark:bg-stone-900 rounded-md shadow-md overflow-hidden transition-transform hover:scale-105"
           >
-            <div 
+            <div
               className={`p-4 text-lg font-bold bg-slate-200 dark:bg-stone-800`}
             >
               {category.category}
@@ -73,10 +81,10 @@ const SkillTree = () => {
                     <span>{skill.level}%</span>
                   </div>
                   <div className="w-full h-2 bg-slate-200 dark:bg-stone-400 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className={`h-full rounded-full transition-all duration-500 bg-slate-400 dark:bg-stone-700`}
-                      style={{ 
-                        width: `${skill.level}%`, 
+                      style={{
+                        width: `${skill.level}%`,
                       }}
                     ></div>
                   </div>
@@ -86,6 +94,10 @@ const SkillTree = () => {
           </div>
         ))}
       </div>
+      <Button onClick={() => handleClick("/work")} variant="primary" className="mt-4">
+        <BriefcaseIcon className='w-4 h-4 font-sans' />
+        Experience
+      </Button>
     </div>
   );
 };

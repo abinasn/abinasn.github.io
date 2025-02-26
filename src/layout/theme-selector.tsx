@@ -2,6 +2,7 @@ import { SunIcon, MoonIcon, ComputerDesktopIcon } from '@heroicons/react/24/outl
 import { useTheme, ThemeType } from '../hooks/theme';
 
 export default function ThemeSelector() {
+  
   const { theme, setTheme } = useTheme();
   const themes: { name: string; value: ThemeType; icon: React.ElementType }[] = [
     {

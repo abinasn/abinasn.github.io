@@ -7,7 +7,7 @@ function Contact() {
     <BorderDesign>
       <>
         <BackgroundIllustration />
-        <div className="mx-8 md:mx-32 animate-texts">
+        <div className="w-full animate-texts">
           <ContactCard />
         </div>
       </>
