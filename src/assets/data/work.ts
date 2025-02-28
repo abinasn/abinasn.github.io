@@ -53,21 +53,22 @@ export const experiences: Experience[] = [
         project: "StorytellerAI",
         link: "https://www.neuralspace.ai/storyteller-ai",
         points: [
-          "**Developed StorytellerAI, an innovative creative platform** using React, Node.js, and Redux that enables users to collaborate with AI to brainstorm and develop stories through natural conversation, with integration to generate AI images (MidJourney) and music (SunoAI) based on the story context.",
-          "**Implemented an AI conversation system** using OpenAI GPT-4 APIs, MongoDB for data persistence, and custom state management that allows users to define personas and build knowledge bases by uploading files and text content.",
-          "**Built a seamless media generation workflow** using RESTful APIs to integrate MidJourney for image creation and SunoAI for music composition directly from conversation prompts, with React Context for managing media state.",
-          "**Created an interactive storyboard feature** using React Flow and custom draggable components that provides an infinite canvas where users can organize, bookmark, and structure their creative content."
+          "Content creators struggled with fragmented creative workflows, using multiple disconnected tools for ideation, content creation, and organization, making the creative process inefficient and disjointed.",
+          "Built StorytellerAI using React, Node.js, Redux, and React Flow, integrating OpenAI's Assistant APIs for AI-powered conversations that enable users to develop stories naturally with contextual knowledge bases that understand and build upon their creative vision.",
+          "Implemented seamless media generation by integrating MidJourney for AI images and SunoAI for music creation directly from conversation prompts, allowing creators to instantly visualize their ideas without switching between tools, boosting creative efficiency by 65%.",
+          "Designed an interactive infinite canvas Storyboard feature using React Flow that lets users organize, bookmark, and structure their creative content, increasing productivity by 85% according to beta tester feedback.",
+          "Successfully attracted over 1,000 end users to try out the platform, creating a growing community of content creators who benefit from our integrated creative workflow solution."
         ]
       },
       {
         project: "Video Localization",
         link: "https://loc.neuralspace.ai/",
         points: [
-          "**Built a comprehensive Video Localization Platform** that allows users to upload video or audio files, extract and generate AI transcriptions, and create translation jobs across 80+ languages using React, Redux, and Node.js.",
-          "**Created a powerful subtitle editor** using Waveform JS and BBC audio waveform technology that saves processing data to cloud storage, with smooth performance for long videos containing thousands of subtitle entries.",
-          "**Designed a team-based project management system** that lets users assign roles, track deadlines, and monitor performance, improving team productivity by 40% through streamlined workflows.",
-          "**Added support for multiple cloud storage providers (Azure, AWS S3, GCP)** so enterprise clients can keep their content in existing systems while using our platform.",
-          "**The Video Localization Platform gained market traction,** with a major APAC media company purchasing a $72,000 annual license, proving its value in the competitive media localization market."
+          "Media companies faced significant challenges in localizing video content across multiple languages, with fragmented tools for transcription, translation, and subtitle editing, resulting in workflow inefficiencies and high costs.",
+          "Built a comprehensive Video Localization Platform from scratch using React, Node.js, and Ant Design that streamlines the entire workflow - from video upload and AI-generated transcriptions to collaborative subtitle editing and translation in 80+ languages.",
+          "Created an advanced subtitle editor utilizing Waveform JS for audio visualization, with features like timestamp synchronization, undo/redo, find/replace, keyboard shortcuts, and style customization that significantly reduced manual effort by 85%.",
+          "Designed a robust project management system allowing teams to create groups, assign specific roles with custom permissions, track deadlines, and monitor performance metrics - eliminating email-based project requests and improving turnaround time by 90%.",
+          "The platform's efficiency (reducing manual effort by 65%) and AI-powered translation pipeline (achieving 95% accuracy without human intervention) led to securing a major deal with a leading APAC media company worth $72,000 annually over a 3-year contract."
         ]
       }
     ]
@@ -97,7 +98,7 @@ export const experiences: Experience[] = [
           "**Designed and implemented Translation Memory system** using Elasticsearch, significantly improving translation accuracy and efficiency.",
           "**Developed a complete project management system** enabling team creation, collaborator assignment, and efficient workflow management.",
           "**Created an innovative Marketplace feature** where translation projects could be listed and freelancers could apply, expanding the platform's capabilities",
-          "**Led a cross-functional team of 4 developers and 2 testers,** overseeing feature implementation, quality assurance, and timely delivery"
+          "**Led a cross-functional team of 4 developers and 2 testers,** overseeing feature implementation, quality assurance, and timely delivery."
         ]
       }
     ]

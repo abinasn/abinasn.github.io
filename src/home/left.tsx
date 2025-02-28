@@ -1,6 +1,7 @@
 import { BriefcaseIcon, LightBulbIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/button";
+import Resume from "../components/resume";
 
 
 export default function Left() {
@@ -32,6 +33,7 @@ export default function Left() {
           <BriefcaseIcon className='w-4 h-4 font-sans' />
           Experience
         </Button>
+        <Resume />
       </div>
     </div>
   )

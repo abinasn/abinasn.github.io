@@ -5,6 +5,7 @@ import {
   AtSymbolIcon,
   PhoneIcon
 } from "@heroicons/react/24/outline";
+import Resume from "../components/resume";
 
 export default function ContactCard() {
   const infoArr = [
@@ -35,6 +36,9 @@ export default function ContactCard() {
             </li>
           ))}
         </ul>
+        <div className="flex justify-center">
+            <Resume />
+        </div>
       </div>
     </div>
   )
