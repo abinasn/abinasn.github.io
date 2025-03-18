@@ -36,7 +36,7 @@ export const experiences: Experience[] = [
   {
     role: "Staff Software Engineer",
     company: "NeuralSpace (A SpeechAI company)",
-    period: "Feb 2022 - Present (3 Years)",
+    period: "Mar 2022 - Present (3 Years)",
     location: "Remote",
     image: NeuralSpace,
     link: "https://www.neuralspace.ai/",
