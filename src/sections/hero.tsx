@@ -129,7 +129,7 @@ export default function Hero() {
           />
         </div>
 
-        <div className="hidden md:flex flex-col items-center gap-2">
+        <div className="hidden md:flex flex-col items-center gap-0.5">
           <p className="text-xs text-zinc-500 dark:text-zinc-400">Abinas Patra</p>
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />

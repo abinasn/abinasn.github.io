@@ -4,7 +4,6 @@ import { useTheme } from '../context/theme'
 type Theme = 'light' | 'dark' | 'system'
 
 const navLinks = [
-	{ label: 'Home', sectionId: null },
 	{ label: 'Work', sectionId: 'work' },
 	{ label: 'Skills', sectionId: 'skills' }
 ]
