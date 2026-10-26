@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { SectionLink } from "./SectionLink";
 
 export const buttonVariants = {
-  solid: "bg-ink text-paper hover:opacity-90",
+  solid: "bg-accent text-on-accent hover:bg-accent-soft",
   outline: "border border-line hover:border-ink",
   light: "bg-panel-fg text-panel-deep hover:opacity-90",
   ghost: "border border-panel-line text-panel-fg hover:border-accent-soft",
