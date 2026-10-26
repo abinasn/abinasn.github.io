@@ -24,7 +24,8 @@ export const contact = {
   linkedin: "https://www.linkedin.com/in/abinaspatra/",
   github: "https://github.com/abinasn",
   resume: "/Abinas_Patra.pdf",
-  leadsEndpoint: "",
+  leadsEndpoint:
+    "https://script.google.com/macros/s/AKfycbx7frhyFVBfXRZ9PbjiPkzrA_ZGcwLwDjYig6N1f7N3_X66AWA5naOfGQXl0uVbJsK7uw/exec",
 } as const;
 
 export const wordmark = "abinasp";
