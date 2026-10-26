@@ -1,3 +1,4 @@
+import { LoaderCircle } from "lucide-react";
 import { useActionState, useState } from "react";
 
 import { buttonBase, buttonVariants } from "@/components/ui/ButtonLink";
@@ -20,6 +21,7 @@ export function ContactForm() {
     submitMessage,
     INITIAL_CONTACT_STATE,
   );
+  const errors = pending ? undefined : state.errors;
 
   return (
     <form key={state.token} action={formAction} noValidate className="mt-9">
@@ -35,7 +37,7 @@ export function ContactForm() {
           placeholder="Your name"
           autoComplete="name"
           defaultValue={state.values?.name}
-          error={state.errors?.name}
+          error={errors?.name}
         />
         <Field
           name="email"
@@ -44,11 +46,11 @@ export function ContactForm() {
           placeholder="name@company.com"
           autoComplete="email"
           defaultValue={state.values?.email}
-          error={state.errors?.email}
+          error={errors?.email}
         />
         <MessageField
           defaultValue={state.values?.message}
-          error={state.errors?.message}
+          error={errors?.message}
         />
       </div>
 
@@ -56,8 +58,12 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={pending}
-          className={`${buttonBase} ${buttonVariants.solid} disabled:pointer-events-none disabled:opacity-60`}
+          aria-busy={pending}
+          className={`${buttonBase} ${buttonVariants.solid} inline-flex items-center gap-2 disabled:pointer-events-none disabled:opacity-60`}
         >
+          {pending && (
+            <LoaderCircle size={15} aria-hidden className="animate-spin" />
+          )}
           {pending ? "Sending…" : contactSection.submit}
         </button>
 
@@ -69,7 +75,7 @@ export function ContactForm() {
         </a>
       </div>
 
-      <StatusLine state={state} />
+      {!pending && <StatusLine state={state} />}
     </form>
   );
 }

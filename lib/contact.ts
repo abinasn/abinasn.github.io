@@ -11,7 +11,10 @@ export type ContactState = {
 export const INITIAL_CONTACT_STATE: ContactState = { status: "idle", token: 0 };
 
 export const CONTACT_SUCCESS =
-  "Thanks — your mail app has the message ready. Hit send and I'll reply within a couple of days.";
+  "Thanks — your message is in. I'll reply within a couple of days.";
+
+const CONTACT_FAILED =
+  "Couldn't send your message. Please try again, or email me directly.";
 
 export const MAX_MESSAGE = 5000;
 
@@ -58,9 +61,16 @@ export async function submitMessage(
     };
   }
 
-  const subject = encodeURIComponent(`New message from ${values.name}`);
-  const body = encodeURIComponent(`${values.message}\n\n${values.name} · ${values.email}`);
-  window.location.href = `mailto:${contact.email}?subject=${subject}&body=${body}`;
+  try {
+    const response = await fetch(contact.leadsEndpoint, {
+      method: "POST",
+      body: JSON.stringify(values),
+    });
+    const result: { ok?: boolean } = await response.json();
+    if (!result.ok) throw new Error("Lead was not saved");
+  } catch {
+    return { status: "error", message: CONTACT_FAILED, values, token: prev.token };
+  }
 
   return { status: "success", message: CONTACT_SUCCESS, token: prev.token + 1 };
 }
