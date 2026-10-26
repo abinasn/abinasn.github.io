@@ -35,7 +35,7 @@ export function Hero() {
           {hero.name}
         </h2>
 
-        <AnimatedHeadline className="mt-5 max-w-[21ch] text-[22px] leading-[1.28] font-medium tracking-[-0.02em] md:text-[34px] md:leading-[1.22]" />
+        <AnimatedHeadline className="mt-5 max-w-[34ch] text-balance text-[22px] leading-[1.28] font-medium tracking-[-0.02em] md:text-[34px] md:leading-[1.22]" />
 
         <p className="text-ink-soft mt-4 max-w-[46ch] text-[13.5px] leading-[1.6] md:mt-5 md:text-[15px] md:leading-[1.65]">
           {hero.subhead}
