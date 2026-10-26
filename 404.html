@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en" class="h-full antialiased" data-scroll-behavior="smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Abinas Patra — Staff Software Engineer</title>
+    <meta
+      name="description"
+      content="Staff Software Engineer specialising in React, Node.js, MongoDB and AI integration. Ten years building AI-native products, real-time interfaces and the platforms underneath."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Manrope:wght@400;500;600;700;800&display=swap"
+    />
+    <style>
+      :root {
+        --font-manrope: "Manrope";
+        --font-plex-mono: "IBM Plex Mono";
+      }
+    </style>
+    <script>
+      (function () {
+        document.documentElement.classList.add("js");
+        if (window.location.hash) {
+          document.documentElement.style.scrollBehavior = "auto";
+        }
+        try {
+          var stored = localStorage.getItem("theme");
+          var theme =
+            stored === "light" || stored === "dark" || stored === "system"
+              ? stored
+              : "system";
+          var resolved =
+            theme === "system"
+              ? window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : theme;
+          document.documentElement.dataset.theme = resolved;
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-DA5vCI1P.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BCWmswNs.css">
+  </head>
+  <body class="bg-paper text-ink flex min-h-full flex-col font-sans">
+    <div id="root" class="flex flex-1 flex-col"></div>
+  </body>
+</html>
