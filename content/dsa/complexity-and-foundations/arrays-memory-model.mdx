@@ -1,0 +1,278 @@
+---
+title: "Arrays and the Memory Model"
+slug: "arrays-memory-model"
+series: "dsa"
+order: 6
+date: "2026-09-05"
+draft: false
+problems:
+  - name: "1929. Concatenation of Array"
+    difficulty: "Easy"
+    idea: "Writing into a preallocated block by computed index"
+    url: "https://leetcode.com/problems/concatenation-of-array/"
+  - name: "1470. Shuffle the Array"
+    difficulty: "Easy"
+    idea: "Two index formulas writing into one block"
+    url: "https://leetcode.com/problems/shuffle-the-array/"
+  - name: "189. Rotate Array"
+    difficulty: "Medium"
+    idea: "Index arithmetic modulo the length"
+    url: "https://leetcode.com/problems/rotate-array/"
+summary: "Why reading arr[i] takes the same time no matter how long the array is, and why reading it in order is faster still."
+tags: ["dsa", "arrays", "memory", "cache"]
+---
+
+## Definition
+
+An **array** is a block of values of equal size, stored back to back in memory, reached by position rather than by search.
+
+Those three properties — equal size, back to back, reached by position — are not separate features. The first two are what make the third possible.
+
+## How it works
+
+### Memory is a numbered strip
+
+Main memory (RAM) is one long run of slots. Each slot holds one byte and carries an **address**: an integer identifying it, like a house number on a very long street.
+
+The processor can read any address directly. It does not walk the street to find house 4000; it jumps there.
+
+An array occupies one unbroken run of those slots. Four 8-byte numbers, with the block beginning at address 1000:
+
+```
+address:  1000    1008    1016    1024
+         +-------+-------+-------+-------+
+value:   |  40   |  17   |  92   |  63   |
+         +-------+-------+-------+-------+
+index:      0       1       2       3
+```
+
+**Contiguous** means exactly this — no gaps, nothing else interleaved, one continuous block.
+
+### Position becomes arithmetic
+
+Because the slots are unbroken and every value is the same width, an index can be converted into an address by counting.
+
+Index 3 sits after three complete elements. Three elements of 8 bytes is 24 bytes, so index 3 begins 24 bytes past the start.
+
+| index | base | elements before it | bytes skipped | address |
+| --- | --- | --- | --- | --- |
+| 0 | 1000 | 0 | 0 | 1000 |
+| 1 | 1000 | 1 | 8 | 1008 |
+| 3 | 1000 | 3 | 24 | 1024 |
+| 5 | 7000 | 5 | 40 | 7040 |
+
+Every row does the same two operations. Written once:
+
+```
+address(i) = base + i × elementSize
+```
+
+The number that matters is how many elements sit *before* the target, not how many are covered up to and including it. Index 3 has three elements in front of it, not four.
+
+### Length does not enter the formula
+
+Look at what that line actually costs: one multiplication and one addition, then a jump.
+
+Now ask the question that decides the cost — does the work grow as the array grows?
+
+| array length | address of index 5 | operations |
+| --- | --- | --- |
+| 10 | 7000 + 5 × 8 | 1 multiply, 1 add |
+| 1,000,000 | 7000 + 5 × 8 | 1 multiply, 1 add |
+
+The array grew a hundred thousand times and the arithmetic did not change by a single step. Length never appears on the right-hand side, so it cannot affect the result. Reaching a position costs **O(1)** — constant work, independent of how much data is there.
+
+This is bought, not free. Remove equal element sizes and the multiplication is meaningless; remove contiguity and the addresses become unpredictable. A structure whose values sit at unrelated addresses has no formula available — the only way to learn where the next value lives is to read the current one first, and that reading grows with the position.
+
+### One fetch brings a neighbourhood
+
+The processor is far faster than RAM — a memory fetch costs on the order of a hundred times more than an arithmetic operation. Left alone, the processor would spend most of its time waiting.
+
+A small, fast memory sits in between, called the **cache**. To keep it stocked, the hardware makes a bet: a request for one address returns not one value but the entire surrounding block, typically 64 bytes, which is then held in the cache.
+
+That block is a **cache line**. The bet is that code which touched one address will shortly want its neighbours.
+
+For 8-byte elements, a 64-byte line carries eight of them. Reading the first eight positions in order:
+
+| access | already in cache | RAM fetch |
+| --- | --- | --- |
+| index 0 | no | **yes** — brings indices 0–7 |
+| index 1 | yes | no |
+| index 2 | yes | no |
+| index 3 | yes | no |
+| index 4 | yes | no |
+| index 5 | yes | no |
+| index 6 | yes | no |
+| index 7 | yes | no |
+
+Eight reads, one fetch. Values scattered across unrelated addresses would land in eight different lines and cost eight fetches for the same eight values.
+
+**Cache locality** is the name for this advantage: values used together are stored together, so the hardware's bet pays off. It does not change the Big-O of a full scan — that is O(n) either way — but it changes the constant, and the constant here is the expensive part.
+
+### Fetches are counted per line, not per element
+
+A consequence worth tracing, because it inverts the obvious guess. Two scans of the same million-element array:
+
+```js
+// A — every element
+for (let i = 0; i < n; i++) sum += arr[i];
+
+// B — every eighth element
+for (let i = 0; i < n; i += 8) sum += arr[i];
+```
+
+B performs one eighth of the additions. But a stride of 8 lands exactly one element in each cache line, so B still pulls every line off RAM and discards seven values out of eight.
+
+| | reads | RAM fetches | values used per fetch |
+| --- | --- | --- | --- |
+| A | 1,000,000 | 125,000 | 8 of 8 |
+| B | 125,000 | 125,000 | 1 of 8 |
+
+Identical fetch counts. B removed arithmetic, which was never the bottleneck, and left the memory traffic untouched — so it finishes only slightly ahead, not eight times ahead.
+
+## The invariant
+
+Element `i` begins at `base + i × elementSize` — true for every index, at every array length, no matter what the values are.
+
+## Implementation
+
+The formula is normally hidden inside the language, but it is small enough to write out:
+
+```js
+// Where element i physically begins.
+// invariant: only i and elementSize appear — never the length
+function addressOf(base, i, elementSize) {
+  return base + i * elementSize;
+}
+
+addressOf(1000, 3, 8); // 1024
+addressOf(7000, 5, 8); // 7040
+```
+
+Ordinary code never calls this. Writing `arr[3]` compiles down to the same multiply-and-add, which is why square-bracket access is a jump rather than a search.
+
+```js
+// Sequential order keeps every fetched line fully used.
+let sum = 0;
+for (let i = 0; i < arr.length; i++) {
+  sum += arr[i];
+}
+```
+
+## Key terms
+
+| term | plain-English meaning |
+| --- | --- |
+| address | the integer identifying one slot of memory |
+| contiguous | stored in one unbroken run, no gaps |
+| cache | small fast memory holding recently fetched blocks |
+| cache line | the block RAM returns per request, typically 64 bytes |
+| cache locality | the benefit gained when values used together are stored together |
+
+## Practice
+
+Each of these turns a position into an address by arithmetic alone. None of them searches.
+
+<Problems />
+
+<Solution problem="1929. Concatenation of Array">
+
+**Approach.** The answer has length `2n` and that is known before any work starts, so the block is allocated once at full size. Index `i` of the answer takes the value at `i % n`, which wraps the source twice.
+
+**Invariant.** `ans[i]` is always `nums[i % n]`, for every `i` already written.
+
+```js
+var getConcatenation = function (nums) {
+  const n = nums.length;
+  const ans = new Array(2 * n); // exact size known up front
+
+  for (let i = 0; i < 2 * n; i++) {
+    ans[i] = nums[i % n]; // i < n reads the first pass, i >= n the second
+  }
+
+  return ans;
+};
+```
+
+**Cost.** `2n` writes, each one multiply-and-add. Time O(n), and the only memory used is the answer itself.
+
+</Solution>
+
+<Solution problem="1470. Shuffle the Array">
+
+**Approach.** The input holds `x1..xn` in the first half and `y1..yn` in the second. Rather than searching, both halves are read by formula: the `i`-th pair comes from `nums[i]` and `nums[i + n]`, and lands at `2i` and `2i + 1`.
+
+**Invariant.** After step `i`, positions `0` through `2i + 1` of the result hold the first `i + 1` pairs, interleaved.
+
+```js
+var shuffle = function (nums, n) {
+  const result = new Array(2 * n);
+
+  for (let i = 0; i < n; i++) {
+    result[2 * i] = nums[i]; // x_i
+    result[2 * i + 1] = nums[i + n]; // y_i
+  }
+
+  return result;
+};
+```
+
+Hand trace for `nums = [2,5,1,3,4,7]`, `n = 3`:
+
+| i | reads `nums[i]`, `nums[i+n]` | writes to | result so far |
+| --- | --- | --- | --- |
+| 0 | 2, 3 | 0, 1 | `[2,3,_,_,_,_]` |
+| 1 | 5, 4 | 2, 3 | `[2,3,5,4,_,_]` |
+| 2 | 1, 7 | 4, 5 | `[2,3,5,4,1,7]` |
+
+**Cost.** One pass, four address computations per step. Time O(n).
+
+</Solution>
+
+<Solution problem="189. Rotate Array">
+
+**Approach.** Rotating right by `k` moves the value at `i` to position `(i + k) % n`. That is one formula covering every element, including the ones that wrap past the end.
+
+`k` is reduced by `k % n` first, since rotating by the full length returns the array unchanged.
+
+**Invariant.** Every value read from index `i` is written to `(i + k) % n`, and each destination is written exactly once.
+
+```js
+var rotate = function (nums, k) {
+  const n = nums.length;
+  k %= n; // a full rotation is a no-op
+
+  const rotated = new Array(n);
+  for (let i = 0; i < n; i++) {
+    rotated[(i + k) % n] = nums[i]; // wraps past the end
+  }
+
+  for (let i = 0; i < n; i++) {
+    nums[i] = rotated[i]; // copy back, since the caller reads nums
+  }
+};
+```
+
+Hand trace for `nums = [1,2,3,4]`, `k = 1`:
+
+| i | value | destination `(i+1) % 4` |
+| --- | --- | --- |
+| 0 | 1 | 1 |
+| 1 | 2 | 2 |
+| 2 | 3 | 3 |
+| 3 | 4 | 0 — wraps |
+
+Result `[4,1,2,3]`.
+
+**Cost.** Two sequential passes, so time O(n) and the fetches stay line-friendly. The scratch block costs O(n) extra space; an in-place version exists that uses none, at the price of touching each value more than once.
+
+</Solution>
+
+## TL;DR
+
+- An array is equal-sized values in one unbroken block of memory.
+- Position converts to address by arithmetic: `base + i × elementSize`.
+- Array length is absent from that formula, so indexing is O(1) at any size.
+- Equal sizes make the multiplication valid; contiguity makes the addresses predictable. Lose either and the formula collapses into a walk.
+- RAM returns a whole cache line per request, so sequential reads amortise one fetch across many values.
+- Skipping elements does not skip fetches — fetches are counted per line, not per element.

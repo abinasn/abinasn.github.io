@@ -1,0 +1,377 @@
+---
+title: "Two Pointers from Opposite Ends"
+slug: "two-pointers-opposite-ends"
+series: "dsa"
+order: 9
+date: "2026-09-10"
+draft: false
+problems:
+  - name: "125. Valid Palindrome"
+    difficulty: "Easy"
+    idea: "Mirror pairs converging inward, skipping positions that are not candidates"
+    url: "https://leetcode.com/problems/valid-palindrome/"
+  - name: "167. Two Sum II - Input Array Is Sorted"
+    difficulty: "Medium"
+    idea: "Sorted order makes an inward move raise or lower the sum predictably"
+    url: "https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/"
+  - name: "11. Container With Most Water"
+    difficulty: "Medium"
+    idea: "The shorter line caps the height while width only shrinks, so it is exhausted"
+    url: "https://leetcode.com/problems/container-with-most-water/"
+summary: "How two indices walking toward each other answer a question about pairs in one pass, and what has to be proven before a position can be thrown away."
+tags: ["dsa", "arrays", "strings", "two-pointers", "javascript"]
+---
+
+## Definition
+
+**Two pointers from opposite ends** is a technique where two indices start at the first and last positions of a sequence and move toward each other, examining one pair per step until they meet.
+
+The two indices are conventionally named `left` and `right`. Everything between them is the region still under consideration; everything outside them has been ruled out.
+
+```
+[ 1 ] [ 8 ] [ 6 ] [ 2 ] [ 5 ] [ 4 ] [ 3 ]
+  ^                                    ^
+ left                               right
+        ← still under consideration →
+```
+
+## The problem it solves
+
+Many questions are about a **pair** of positions: two values that sum to a target, two characters that mirror each other, two lines that hold the most water between them.
+
+The direct approach tests every pair. For a sequence of length *n* there are n(n−1)/2 of them, so the cost is O(n²) — at n = 10,000 that is roughly 50 million pairs.
+
+Two pointers answer the same question in at most *n* steps. The saving comes from **not testing most pairs at all**, which is only legitimate if each step can prove the pairs it skips could not have won.
+
+## How it works
+
+### Convergence
+
+Checking whether a string reads the same forwards and backwards is the plainest case. Put `left` on the first character, `right` on the last, compare them, and step both inward.
+
+Hand trace on `"racecar"`, indices 0–6:
+
+| left | right | s[left] | s[right] | Match? | Action |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 6 | r | r | yes | both move inward |
+| 1 | 5 | a | a | yes | both move inward |
+| 2 | 4 | c | c | yes | both move inward |
+| 3 | 3 | e | e | — | pointers met, stop |
+
+Four comparisons on a seven-character string, and no copy of the string was made.
+
+A 7-character string has 21 possible pairs. Twenty-one were available; four were examined. The other seventeen were never relevant, because the question only ever asks about index `i` against index `n − 1 − i`.
+
+**Convergence** is that shape: the pair at the two ends is resolved, the ends are discarded, and the unresolved region shrinks by up to two positions per step.
+
+### The precondition
+
+An inward move must have a **predictable effect**. Without that, nothing can be discarded and the technique does not apply.
+
+Consider searching an unsorted array for two values summing to 9:
+
+```js
+const nums = [3, 7, 1, 2, 8];
+// left = 0 (value 3), right = 4 (value 8), sum = 11 — too big
+```
+
+The sum is too large, so the instinct is to shrink it by moving `right` inward. But `right − 1` holds 2, which is smaller, while `left + 1` holds 7, which is larger. Moving a pointer tells you nothing about which way the value goes.
+
+Sort the same values and the picture changes completely:
+
+```js
+const nums = [1, 2, 3, 7, 8];
+// left moving inward can only increase the value
+// right moving inward can only decrease it
+```
+
+Now each move has a guaranteed direction, so a step that decides "the sum is too big" knows exactly which pointer to move.
+
+Three structures supply this predictability:
+
+| Structure | What an inward move guarantees |
+| --- | --- |
+| Symmetry | Position `i` is defined to pair with `n − 1 − i`, and nothing else |
+| Sorted order | The value at `left` rises; the value at `right` falls |
+| A width property | The distance `right − left` shrinks by one, always |
+
+### Deciding which pointer moves
+
+When both pointers cannot move together, the step has to identify which endpoint is **exhausted** — proven unable to appear in a better answer than one already recorded.
+
+Take a row of vertical lines of given heights. Two lines hold water between them; the level is capped by the shorter of the two, and the width is the distance between them.
+
+```
+area = min(height[left], height[right]) × (right − left)
+```
+
+Hand trace the first decision on `[1, 8, 6, 2]`, with `left = 0` (height 1) and `right = 3` (height 2):
+
+```
+area = min(1, 2) × (3 − 0) = 1 × 3 = 3
+```
+
+One of the two must be discarded. Hold the **shorter** line, index 0, and list every partner it could still have:
+
+| Pair | min height | Width | Area |
+| --- | --- | --- | --- |
+| 0 and 3 | min(1, 2) = 1 | 3 | 3 |
+| 0 and 2 | min(1, 6) = 1 | 2 | 2 |
+| 0 and 1 | min(1, 8) = 1 | 1 | 1 |
+
+The min column is stuck at 1 in every row — the short line is one of the two lines in each pair, so the minimum can never rise above it. The width column only shrinks as the other pointer comes inward.
+
+A capped height multiplied by a shrinking width means every remaining pair with line 0 is worse than the one just measured. Line 0 is exhausted, and `left` moves.
+
+### Why the taller side must not move
+
+Discarding the taller line instead has no such proof behind it. On the same input `[1, 8, 6, 2]`, moving `right` from 3 to 2 makes the pair of index 1 and index 3 — heights 8 and 2, width 2, area 4 — permanently unreachable.
+
+That pair is the correct answer. Moving the taller pointer does not return a slightly worse number; it returns 2 instead of 4 and is wrong.
+
+The asymmetry is the point. The short line comes with a proof that nothing better sits behind it. The tall line carries no such proof, because it may still pair well with a line that has not been seen yet.
+
+### When the two ends are equal
+
+On `[4, 3, 2, 1, 4]` both ends have height 4, so neither is shorter. Run the argument on each separately: keeping the left line caps every future pair at `min(4, x) ≤ 4`, and keeping the right line caps them at exactly the same value.
+
+Both proofs hold, so either may be discarded — or both at once. A tie is the one case where the argument does not force a choice.
+
+### Where the loop stops
+
+Two conditions are available, and they are not interchangeable.
+
+| Condition | Stops when | Use it when |
+| --- | --- | --- |
+| `left < right` | The pointers meet | A position paired with itself is meaningless |
+| `left <= right` | The pointers cross | A position paired with itself is a valid answer |
+
+On the odd-length `"racecar"`, `left < right` ends at index 3 without comparing `'e'` to itself, which is a comparison that is always true and always wasted.
+
+For the water problem `left < right` is not an optimisation but a requirement: `left === right` gives width 0 and therefore area 0. The same holds for pair-sum problems, where a single element may not be used twice.
+
+## The invariant
+
+An **invariant** is a statement that is true before the loop begins and still true after every iteration.
+
+**Everything outside `[left, right]` has been proven to hold no better answer than what is already recorded.**
+
+Each discard in the trace above is one instance of this being preserved. When the loop ends the region is empty, so "outside `[left, right]`" covers the whole sequence — and the recorded answer is the final one.
+
+For the symmetric case the invariant reads more concretely: every mirror pair `(i, n − 1 − i)` with `i < left` has already been confirmed to match.
+
+## Implementation
+
+The loop skeleton is fixed; only the decision in the middle changes.
+
+```js
+while (left < right) {
+  // 1. compute something from the pair (left, right)
+  // 2. decide: is this the answer, or which endpoint is exhausted?
+  // 3. move that endpoint inward
+}
+```
+
+The decision comes in two shapes, and picking the wrong one is a correctness bug rather than a slow answer.
+
+**Three-way**, when searching for a specific target. A computed value is under, over, or exactly on it:
+
+```js
+while (left < right) {
+  const sum = nums[left] + nums[right];
+  if (sum === target) return [left, right]; // exact hit — stop
+  if (sum < target) left++;  // need a bigger sum — raise the floor
+  else right--;              // need a smaller sum — lower the ceiling
+}
+```
+
+**Two-way**, when optimising over all pairs. There is no target to hit, so the result accumulates and the loop must run to convergence:
+
+```js
+let best = 0;
+while (left < right) {
+  const area = Math.min(height[left], height[right]) * (right - left);
+  best = Math.max(best, area);          // record, never return early
+  if (height[left] < height[right]) left++;
+  else right--;                          // ties: either side is provably safe
+}
+return best;
+```
+
+Returning as soon as a good value appears in the two-way shape is a common error. Nothing signals completion except the pointers meeting.
+
+## Complexity
+
+| Operation | Cost | Why |
+| --- | --- | --- |
+| Full run | O(n) time | `left` only rises and `right` only falls, so the pointers make at most *n* moves between them, and each iteration consumes at least one move while doing O(1) work |
+| Memory used | O(1) space | Two integer variables; nothing is copied and nothing scales with *n* |
+
+Against the O(n²) pair scan this is 10,000 steps instead of roughly 50 million at n = 10,000.
+
+## Key terms
+
+| Term | Plain-English meaning |
+| --- | --- |
+| Convergence | Two indices walking toward each other until they meet |
+| Exhausted endpoint | A position proven unable to appear in any better answer, and therefore safe to discard |
+| Invariant | A statement that holds before the loop and after every iteration of it |
+
+## Edge cases
+
+| Case | What breaks | How the code handles it |
+| --- | --- | --- |
+| Length 0 or 1 | There is no pair to examine | `left < right` is false immediately; the loop body never runs |
+| All values equal | Neither endpoint is provably shorter or smaller | Ties are safe — either branch of the comparison discards a genuinely exhausted endpoint |
+| No pair satisfies the target | A three-way search never hits its `return` | The loop exits on convergence; return the agreed "not found" value after it |
+| Positions that are not candidates | A comparison would be made against something the question excludes | Move that pointer inward without comparing and without touching the other one |
+
+## When to use
+
+- The question is about a **pair** of positions rather than a single one.
+- The sequence is sorted, symmetric, or has a width that shrinks predictably.
+- The answer at the two ends can be argued to rule out one of them.
+
+## When to avoid
+
+- The order is arbitrary and no inward move has a guaranteed effect.
+- The answer needs three or more positions considered together at once.
+- Discarding an endpoint cannot be justified — an unproven discard silently returns a wrong answer rather than a slow one.
+
+## Practice
+
+Each of these resolves a pair at the two ends and then discards an endpoint on the strength of a proof.
+
+<Problems />
+
+<Solution problem="125. Valid Palindrome">
+
+**Approach.** Only letters and digits participate, so a position holding anything else is not a candidate at all. When `left` lands on one, it moves inward alone — no comparison is made and `right` does not move.
+
+Once both pointers sit on candidates, the two characters are compared case-insensitively. A mismatch settles the question immediately.
+
+**Invariant.** Every mirror pair of candidate characters with an index below `left` has already been confirmed to match.
+
+```js
+const isAlnum = (c) => /[a-z0-9]/i.test(c);
+
+var isPalindrome = function (s) {
+  let left = 0;
+  let right = s.length - 1;
+
+  while (left < right) {
+    // Skip non-candidates: advance one pointer, compare nothing.
+    if (!isAlnum(s[left])) { left++; continue; }
+    if (!isAlnum(s[right])) { right--; continue; }
+
+    if (s[left].toLowerCase() !== s[right].toLowerCase()) return false;
+
+    left++;
+    right--;
+  }
+
+  return true; // pointers met with no mismatch found
+};
+```
+
+Hand trace for `"a,b a"`, indices 0–4:
+
+| left | right | s[left] | s[right] | Action |
+| --- | --- | --- | --- | --- |
+| 0 | 4 | a | a | match, both move |
+| 1 | 3 | , | (space) | `,` is not a candidate, left moves only |
+| 2 | 3 | b | (space) | space is not a candidate, right moves only |
+| 2 | 2 | — | — | pointers met, return `true` |
+
+**Cost.** Time O(n), since a skip and a comparison both consume one pointer move from the same budget of *n*. Space O(1) — no filtered copy of the string is built.
+
+</Solution>
+
+<Solution problem="167. Two Sum II - Input Array Is Sorted">
+
+**Approach.** The array is given in ascending order, which is exactly the predictability the technique needs: moving `left` inward can only raise the sum, and moving `right` inward can only lower it.
+
+Compare the current sum against the target and move the single pointer that pushes the sum the right way. The answer is 1-indexed, so both indices are reported one higher.
+
+**Invariant.** No pair drawn from outside `[left, right]` can sum to the target — every discarded endpoint was either too small to reach it with any remaining partner, or too large to avoid overshooting.
+
+```js
+var twoSum = function (numbers, target) {
+  let left = 0;
+  let right = numbers.length - 1;
+
+  // left < right: an element may not pair with itself.
+  while (left < right) {
+    const sum = numbers[left] + numbers[right];
+
+    if (sum === target) return [left + 1, right + 1];
+    if (sum < target) left++;  // smallest remaining value is too small
+    else right--;              // largest remaining value is too large
+  }
+
+  return []; // unreachable when a solution is guaranteed
+};
+```
+
+Hand trace for `numbers = [2, 7, 11, 15]`, `target = 18`:
+
+| left | right | sum | vs target | Action |
+| --- | --- | --- | --- | --- |
+| 0 | 3 | 2 + 15 = 17 | too small | left moves |
+| 1 | 3 | 7 + 15 = 22 | too large | right moves |
+| 1 | 2 | 7 + 11 = 18 | equal | return `[2, 3]` |
+
+The step from row one discards index 0 entirely: 2 is the smallest value left, and paired with the largest remaining value it still fell short, so it cannot reach the target with anything smaller.
+
+**Cost.** Time O(n), space O(1).
+
+</Solution>
+
+<Solution problem="11. Container With Most Water">
+
+**Approach.** There is no target to hit, so this is the two-way shape: measure the current pair, keep the running maximum, and discard the shorter line for the reason traced above.
+
+**Invariant.** `best` is at least as large as the area of any pair involving an index outside `[left, right]`.
+
+```js
+var maxArea = function (height) {
+  let left = 0;
+  let right = height.length - 1;
+  let best = 0;
+
+  while (left < right) {
+    const area = Math.min(height[left], height[right]) * (right - left);
+    best = Math.max(best, area); // accumulate — no early return exists
+
+    // The shorter line caps every pair it could still form,
+    // while width only shrinks, so it is exhausted.
+    if (height[left] < height[right]) left++;
+    else right--;
+  }
+
+  return best;
+};
+```
+
+Hand trace for `[1, 8, 6, 2]`:
+
+| left | right | Heights | Area | best | Discarded |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 3 | 1, 2 | 1 × 3 = 3 | 3 | left (shorter) |
+| 1 | 3 | 8, 2 | 2 × 2 = 4 | 4 | right (shorter) |
+| 1 | 2 | 8, 6 | 6 × 1 = 6 | 6 | right (shorter) |
+| 2 | 2 | — | — | 6 | pointers met |
+
+**Cost.** Time O(n) against O(n²) for scanning all pairs, space O(1).
+
+</Solution>
+
+## TL;DR
+
+- Two indices start at the ends of a sequence and converge, resolving one pair per step until they meet.
+- The saving is not in checking pairs faster but in discarding positions without checking them.
+- A discard is only legal when the step can prove that endpoint cannot appear in a better answer — an unproven discard returns a wrong answer, not a slow one.
+- The technique needs a structure where an inward move has a predictable effect: symmetry, sorted order, or a shrinking width.
+- With the water problem, the shorter line caps the height of every pair it could still form while the width only shrinks, so it is the one that goes.
+- Use `left < right` when a position paired with itself is meaningless, `left <= right` when it is a valid answer.
+- Neither pointer backtracks, so the whole run costs O(n) time and O(1) space.

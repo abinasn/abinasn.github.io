@@ -1,0 +1,229 @@
+---
+title: "What is PostgreSQL"
+slug: "what-is-postgresql"
+series: "postgresql"
+order: 3
+date: "2026-09-08"
+draft: false
+summary: "PostgreSQL is a long-running server program that owns databases and guarantees that a client is never told a write succeeded until that write is safely on disk."
+tags: ["postgresql", "foundations", "acid", "wal", "architecture"]
+---
+
+## Definition
+
+PostgreSQL is a **server program**: software that starts once, keeps running, and answers
+requests from other programs over a network port. It owns the data files on disk. No
+application reads or writes those files directly — every request goes through the server.
+
+A **database** is one named container of tables inside that server. A single PostgreSQL
+installation holds many databases, and they do not share tables. Three levels of nesting:
+
+| Level | Example | Count |
+|---|---|---|
+| Server (PostgreSQL) | listening on port 5432 | one installation |
+| Database | `learnpg` | many per server |
+| Table | `students` | many per database |
+
+The software is commonly called **Postgres**. Both names refer to the same product.
+
+### Origin
+
+The project began in 1986 at the University of California, Berkeley, as **POSTGRES** — a
+successor to an earlier database called Ingres, hence "post-Ingres". Its founding goal was
+narrow and specific: allow users to add new data types, new functions, and new indexing
+methods without modifying the database's source code.
+
+That goal is the reason the term **extensible** attaches to this system. Support for
+document storage, geographic data, and vector search all entered through that mechanism
+rather than through redesigns of the core.
+
+| Year | Event |
+|---|---|
+| 1986 | POSTGRES starts at Berkeley |
+| 1994 | SQL support added; renamed Postgres95 |
+| 1996 | Renamed PostgreSQL; development moves to a public community |
+
+SQL arrived eight years after the engine. **SQL** is a standard query language spoken by
+many systems; PostgreSQL is one program that speaks it. The two words are not
+interchangeable, and this article marks where they diverge.
+
+### Licence and release cadence
+
+PostgreSQL is distributed under the PostgreSQL Licence, a short permissive licence
+permitting free use, modification, and redistribution, including commercially. No single
+company owns the codebase; it is maintained by a global development group.
+
+One major version is released each year, in September.
+
+## How it works
+
+The central guarantee concerns what happens when the server loses power midway through a
+change. The trace below follows a two-step money transfer through a crash.
+
+### Starting state
+
+```
+ id | holder | balance
+----+--------+---------
+  1 | A      |    2000
+  2 | B      |     500
+(2 rows)
+```
+
+The application asks for two changes that must happen together: subtract 500 from A, add
+500 to B. A group of changes treated as one unit is called a **transaction**.
+
+### The naive design, and why it fails
+
+A strawman implementation writes each change straight to the table file on disk as it
+arrives, and reports success after each one. Trace it against a power failure occurring
+after step 1:
+
+| Step | Action | Disk after the step |
+|---|---|---|
+| 1 | Subtract 500 from A | A = 1500, B = 500 |
+| — | **Power fails** | A = 1500, B = 500 |
+| 2 | Never runs | — |
+
+On restart, 500 units have left A and arrived nowhere. The total across both rows dropped
+from 2500 to 2000. The data is now permanently wrong, and nothing on disk records that a
+second step was ever intended.
+
+### The write-ahead log
+
+PostgreSQL writes a description of each change to a separate sequential file first, called
+the **write-ahead log** (WAL). Table files are updated later. When the transaction
+finishes, a final **commit record** is appended to the WAL and forced to physical storage
+before the client is told anything.
+
+The commit record is a distinct entry. It is not one of the changes; it is the statement
+that the group of changes is complete.
+
+| Step | Appended to WAL | Commit record present | Client informed |
+|---|---|---|---|
+| 1 | `A: 2000 → 1500` | no | no |
+| — | **power fails** | no | no |
+
+### Recovery
+
+On startup, the server reads the WAL and applies one rule: a group of changes with no
+commit record after it is discarded.
+
+| Question at startup | Answer |
+|---|---|
+| Is there a commit record for this group? | No |
+| What happens to the group's changes? | Discarded |
+| Resulting balance of A | 2000 |
+| Resulting balance of B | 500 |
+
+```
+ id | holder | balance
+----+--------+---------
+  1 | A      |    2000
+  2 | B      |     500
+(2 rows)
+```
+
+The transfer did not half-happen. It did not happen.
+
+### The same trace with the commit record written
+
+| Step | Appended to WAL | Commit record present | Client informed |
+|---|---|---|---|
+| 1 | `A: 2000 → 1500` | no | no |
+| 2 | `B: 500 → 1000` | no | no |
+| 3 | commit record | yes, forced to disk | yes |
+| — | **power fails** | yes | — |
+
+Here the table files may still be unwritten in memory when power is lost. The WAL survives,
+and startup replays its records to rebuild the missing table updates. The result is A = 1500,
+B = 1000.
+
+### The four guarantees
+
+The behaviour above is two of four properties abbreviated **ACID**.
+
+| Letter | Name | Guarantee |
+|---|---|---|
+| A | Atomicity | Every step of a transaction, or none of them |
+| C | Consistency | Declared rules on the data are never left violated |
+| I | Isolation | Concurrent transactions do not observe each other's unfinished work |
+| D | Durability | Once reported committed, a change survives loss of power |
+
+Atomicity is what discards the uncommitted group. Durability is what protects the group
+once its commit record exists. They cover different halves of the same crash.
+
+## Implementation
+
+The following query asks a running server to identify itself. It is the smallest proof that
+a connection reached a real PostgreSQL server.
+
+```sql
+-- SELECT returns computed values; version() is a built-in function
+SELECT version();
+```
+
+Output:
+
+```
+                            version
+-----------------------------------------------------------------
+ PostgreSQL 18.6 on aarch64-apple-darwin, compiled by clang 16...
+(1 row)
+```
+
+`version()` is **PostgreSQL-specific**. The SQL standard defines no such function.
+
+### Reading the version number
+
+| Component | Name | Meaning of a change |
+|---|---|---|
+| `18` | Major version | New features; upgrading requires a migration procedure |
+| `6` | Minor version | Bug and security fixes; binaries are replaced, data files are untouched |
+
+Versions before 2017 used a two-part major number, such as `9.6`, where `9.6` and `9.5`
+were different major versions. The scheme was flattened to a single number from version 10
+onward.
+
+### Extensions
+
+An **extension** is a package that adds data types, functions, or index types to a running
+server.
+
+```sql
+-- loads a package into the current database; nothing is recompiled
+CREATE EXTENSION pgvector;
+```
+
+`CREATE EXTENSION` is PostgreSQL-specific. This is the mechanism the 1986 design goal
+produced, still in use.
+
+## The invariant
+
+> A client is never told that a transaction succeeded until that transaction's commit
+> record is physically stored. Any transaction without a stored commit record is discarded
+> at startup.
+
+Two consequences follow directly.
+
+**There is no partial outcome.** A reported success means every step is durable. An absent
+report means no step survives. No third state exists on disk.
+
+**Confirmation costs a physical write.** Each commit waits for storage hardware to
+acknowledge the commit record, which sets a floor on how fast transactions can complete.
+Batching more work into one transaction amortises that cost; committing each row
+separately pays it every time.
+
+The invariant covers the server and its disk, not the network between server and client. A
+failure after the commit record is stored but before the reply is delivered leaves the
+client unsure while the server is certain. Handling that ambiguity is the caller's
+responsibility.
+
+## TL;DR
+
+- PostgreSQL is a server program that owns databases; a database is a container of tables inside it, and one server holds many databases.
+- It began as POSTGRES at Berkeley in 1986, built around user-added types and index methods; SQL support arrived in 1994 and the current name in 1996.
+- It is released under a permissive licence, is owned by no single company, and ships one major version each year.
+- Changes are written to a write-ahead log before the table files, and a commit record marks a transaction as complete.
+- Atomicity discards any transaction lacking a commit record; durability protects any transaction that has one.
+- In a version number such as `18.6`, the first part is the major version and the second carries only fixes.

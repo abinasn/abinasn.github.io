@@ -1,0 +1,291 @@
+---
+title: "Strings and Immutability"
+slug: "strings-and-immutability"
+series: "dsa"
+order: 8
+date: "2026-09-10"
+draft: false
+problems:
+  - name: "125. Valid Palindrome"
+    difficulty: "Easy"
+    idea: "Filtering characters by code into an array, then allocating the string once"
+    url: "https://leetcode.com/problems/valid-palindrome/"
+  - name: "242. Valid Anagram"
+    difficulty: "Easy"
+    idea: "Turning a character code into an array index to tally counts"
+    url: "https://leetcode.com/problems/valid-anagram/"
+summary: "Why a string can never be edited in place, and why that makes a loop of appends cost far more than the n steps it appears to take."
+tags: ["dsa", "strings", "immutability", "amortised-analysis", "javascript"]
+---
+
+## Definition
+
+A **string** is a sequence of characters stored in order. Each character is held as a number — its **code point** — because memory stores numbers, not letter shapes.
+
+In JavaScript a string is **immutable**: once created, its contents can never be altered. Every operation that appears to modify a string instead produces a new string and leaves the original untouched.
+
+```
+"cat"
+
+[ 99 ][ 97 ][ 116 ]
+   c     a     t
+ └── written once, never rewritten ──┘
+```
+
+## The problem it solves
+
+Immutability is what makes a string safe to share. Two variables can point at the same block with no risk that one changes it underneath the other, so assignment never needs to copy.
+
+The cost is paid on the other side. Since the block cannot be edited, **every change means allocating a new block and copying the kept characters into it** — the same resize a dynamic array performs, except a string performs it on every change rather than only when it runs out of room.
+
+## How it works
+
+### Characters are numbers
+
+Every character maps to one fixed number, agreed on by a shared standard so that two different machines decode the same number to the same character.
+
+| Character | Code point |
+|---|---|
+| `' '` (space) | 32 |
+| `'0'` | 48 |
+| `'A'` | 65 |
+| `'Z'` | 90 |
+| `'a'` | 97 |
+| `'z'` | 122 |
+
+```js
+"A".charCodeAt(0); // 65   — character to number
+String.fromCharCode(65); // "A"  — number to character
+```
+
+Two gaps in that table turn character tests into arithmetic:
+
+- `'a'` is 97 and `'A'` is 65, so lowercase sits exactly **32 above** uppercase.
+- `'a'` through `'z'` is an unbroken run, so `code - 97` gives a slot index from 0 to 25.
+
+### An edit is a rebuild
+
+Take `"cat"` and try to turn it into `"bat"` by overwriting the first character.
+
+```js
+let s = "cat";
+s[0] = "b";
+console.log(s); // "cat" — unchanged
+```
+
+The assignment neither throws nor works. Writing to a string index is discarded outright; under `"use strict"` it raises a `TypeError` instead.
+
+What has to happen is a full rebuild:
+
+```
+before:   [ c ][ a ][ t ]     <- block A, locked for its lifetime
+
+after:    [ b ][ a ][ t ]     <- block B, freshly allocated
+          the variable now points here; block A is released
+```
+
+So an edit is three steps: allocate a new block, copy in what is kept, write the new part.
+
+### Hand trace: 4 appends
+
+Because each `+=` allocates and copies, the cost of one append is not fixed — it grows with what has already been built. Trace building `"abcd"`, one character per step.
+
+| Append | Result after | Characters copied |
+|---|---|---|
+| 1 | `"a"` | 1 |
+| 2 | `"ab"` | 2 |
+| 3 | `"abc"` | 3 |
+| 4 | `"abcd"` | 4 |
+
+The finished string is 4 characters long. Building it copied 1 + 2 + 3 + 4 = **10** characters.
+
+### Reading the trace
+
+Every append resizes, and each resize copies more than the last, because the thing being copied keeps growing. Nothing gets rarer to offset it.
+
+For n appends the copies sum to n(n+1)/2. Expanded that is n²/2 + n/2, and the n² term dominates: a loop of 1,000 appends copies **500,500** characters to produce a 1,000-character result.
+
+| 16 appends | Total character-copies | Copies per append |
+|---|---|---|
+| String `+=` | 136 | 8.5, and rising with n |
+| Array push, then join | 16 | 1, and staying there |
+
+This is the fixed-increment growth rule, forced. A string block holds exactly its own length and no spare room, so there is no capacity to grow into and no multiplying factor available.
+
+### The fix
+
+An array *is* mutable and *does* keep spare capacity, so `push` writes into room the block already has. Collect the pieces there and allocate the string exactly once, at the end.
+
+| Step | `parts` after push | Characters copied |
+|---|---|---|
+| 1 | `["a"]` | 0 |
+| 2 | `["a","b"]` | 0 |
+| 3 | `["a","b","c"]` | 0 |
+| 4 | `["a","b","c","d"]` | 0 |
+| join | `"abcd"` | 4 |
+
+Four copies against ten, and the gap widens quadratically with n.
+
+## The invariant
+
+**No string exists until `join` runs.** Through every iteration `parts` holds the pieces in order, and the only allocation still outstanding is the single final one.
+
+## Implementation
+
+```js
+// Slow — one new block per iteration, O(n^2) total copying.
+function buildSlow(n) {
+  let result = "";
+  for (let i = 0; i < n; i++) {
+    result += "x"; // allocates a new block, copies all of result into it
+  }
+  return result;
+}
+
+// Fast — pieces held in a mutable array, one allocation at the end.
+function buildFast(n) {
+  const parts = [];
+  for (let i = 0; i < n; i++) {
+    // Invariant: parts holds every piece in order; no string exists yet.
+    parts.push("x"); // writes into the array's spare capacity
+  }
+  return parts.join(""); // the one and only string allocation
+}
+```
+
+The shape applies whenever pieces arrive one at a time: push into an array, join once.
+
+## Complexity
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| `+=` inside a loop | O(n²) | O(n) | Step i copies the i characters built so far |
+| Array push, then `join` | O(n) | O(n) | Each push is amortised O(1); `join` copies each character once |
+
+Space is O(n) either way, since the finished string has to exist. Only the copying differs.
+
+## Key terms
+
+| Term | Plain-English meaning |
+|---|---|
+| Code point | The number a character is stored as |
+| Immutable | Cannot be changed after creation; a change produces a new value instead |
+| Concatenation | Joining two strings by allocating a block and copying both into it |
+
+## Edge cases
+
+| Case | What breaks | How the code handles it |
+|---|---|---|
+| `s[0] = "b"` | Silently ignored, so a mutation bug leaves no trace | Build a new string with `slice` or an array instead |
+| `s[0] = "b"` under `"use strict"` | Throws `TypeError` | Strict mode reports the failed write rather than swallowing it |
+| `s.charCodeAt(i)` past the end | Returns `NaN`, and every comparison against `NaN` is false | Range checks fail closed, so no extra guard is needed |
+| `[].join("")` | Nothing — returns `""` | Zero pieces yield the empty string, so empty input needs no special case |
+| A single `+=` outside a loop | Nothing | One allocation is not a trap; the cost only compounds when it repeats |
+
+## When to use / avoid
+
+Reach for array-and-join when:
+
+- pieces are appended inside a loop whose trip count grows with the input
+- the number of appends is not known before the loop starts
+- the result is assembled from many small fragments
+
+Leave it alone when:
+
+- the pieces are known upfront and fit in one template literal or a single `+`
+- there are only a handful of appends and clarity matters more than the constant factor
+
+## Practice
+
+Both of these read characters as numbers rather than comparing them as text.
+
+<Problems />
+
+<Solution problem="125. Valid Palindrome">
+
+**Approach.** The input carries punctuation, spaces and mixed case, none of which count. One pass keeps only letters and digits, lowercasing as it goes — and character codes make both tests arithmetic rather than lookups.
+
+The survivors go into an array, not a string. Appending to a string here would rebuild the whole result on every kept character, turning a linear filter into a quadratic one.
+
+**Invariant.** `kept` holds every alphanumeric character seen so far, lowercased and in original order.
+
+```js
+var isPalindrome = function (s) {
+  const kept = [];
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+
+    if (c >= 48 && c <= 57) {
+      kept.push(s[i]); // '0'..'9'
+    } else if (c >= 97 && c <= 122) {
+      kept.push(s[i]); // 'a'..'z'
+    } else if (c >= 65 && c <= 90) {
+      kept.push(String.fromCharCode(c + 32)); // 'A'..'Z', shifted down
+    }
+    // Invariant: kept is every alphanumeric so far, lowercased, in order.
+  }
+
+  const cleaned = kept.join(""); // one allocation
+  const reversed = kept.slice().reverse().join("");
+  return cleaned === reversed;
+};
+```
+
+Hand trace for `"A a"`:
+
+| i | char | code | action | kept |
+| --- | --- | --- | --- | --- |
+| 0 | `A` | 65 | uppercase, push 65 + 32 | `["a"]` |
+| 1 | ` ` | 32 | not alphanumeric, skip | `["a"]` |
+| 2 | `a` | 97 | lowercase, push as-is | `["a","a"]` |
+| — | — | — | join, compare `"aa"` to `"aa"` | `true` |
+
+**Cost.** Time O(n) — one pass to filter, one to reverse, one to join. Space O(n) for the kept characters. Swapping the array for `+=` would make the filter pass O(n²).
+
+</Solution>
+
+<Solution problem="242. Valid Anagram">
+
+**Approach.** Two strings are anagrams when every character appears the same number of times in both. Unequal lengths rule that out immediately, at no cost.
+
+The inputs are lowercase letters, so `code - 97` maps each character onto a slot from 0 to 25. That makes a fixed 26-slot array enough to tally both strings in one pass: increment for `s`, decrement for `t`, and matching counts cancel to zero.
+
+**Invariant.** `counts[k]` holds the number of times letter `k` has appeared in `s` minus the number of times it has appeared in `t`, across every position processed so far.
+
+```js
+var isAnagram = function (s, t) {
+  if (s.length !== t.length) return false;
+
+  const counts = new Array(26).fill(0);
+
+  for (let i = 0; i < s.length; i++) {
+    counts[s.charCodeAt(i) - 97]++; // 'a' -> slot 0, 'z' -> slot 25
+    counts[t.charCodeAt(i) - 97]--;
+    // Invariant: counts holds (count in s) - (count in t) so far.
+  }
+
+  return counts.every((c) => c === 0); // every surplus cancelled
+};
+```
+
+Hand trace for `s = "ab"`, `t = "ba"`:
+
+| i | `s[i]` | `t[i]` | slot changes | counts (a, b) |
+| --- | --- | --- | --- | --- |
+| 0 | `a` | `b` | `+1` at 0, `-1` at 1 | `1, -1` |
+| 1 | `b` | `a` | `+1` at 1, `-1` at 0 | `0, 0` |
+| — | — | — | all zero | `true` |
+
+**Cost.** Time O(n) for the single combined pass. Space O(1) — the tally is 26 slots no matter how long the input is.
+
+</Solution>
+
+## TL;DR
+
+- A string is a sequence of characters, each stored as a numeric code point; `'a'` is 97, `'A'` is 65, and lowercase sits 32 above uppercase.
+- Strings are immutable, so writing to an index is silently ignored, or throws under `"use strict"`.
+- Every change therefore allocates a new block and copies the kept characters into it.
+- A string block holds no spare capacity, so there is no growth factor to amortise against — every append resizes.
+- Appending n times copies n(n+1)/2 characters, making the loop O(n²) even though it reads as linear.
+- Push the pieces into an array and `join` once instead: n amortised-O(1) writes plus a single allocation, O(n) overall.

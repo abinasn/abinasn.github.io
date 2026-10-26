@@ -1,0 +1,253 @@
+---
+title: "Dynamic Arrays and Amortised Cost"
+slug: "dynamic-arrays-amortised-cost"
+series: "dsa"
+order: 7
+date: "2026-09-05"
+draft: false
+problems:
+  - name: "66. Plus One"
+    difficulty: "Easy"
+    idea: "Allocating a larger block when the existing one cannot hold the result"
+    url: "https://leetcode.com/problems/plus-one/"
+  - name: "1441. Build an Array With Stack Operations"
+    difficulty: "Medium"
+    idea: "Appending to a result array of unknown final length"
+    url: "https://leetcode.com/problems/build-an-array-with-stack-operations/"
+summary: "Why an array that cannot grow still lets you append forever, and why that append counts as constant time even though it sometimes copies everything."
+tags: ["dsa", "arrays", "amortised-analysis", "javascript", "memory"]
+---
+
+## Definition
+
+A **dynamic array** is an array that can be appended to. It holds two numbers instead of one: **length**, how many values are stored, and **capacity**, how many slots the underlying block actually has.
+
+Capacity is always at least length. The gap between them is spare room, reserved in advance so that most appends have somewhere to go.
+
+```
+capacity 8, length 5
+
+[ 5 ] [ 8 ] [ 2 ] [ 9 ] [ 7 ] [   ] [   ] [   ]
+ └────────── length 5 ──────┘  └── spare room ──┘
+ └──────────────── capacity 8 ─────────────────┘
+```
+
+## The problem it solves
+
+An array is one unbroken block of memory of a fixed size. The slot immediately after the block belongs to something else, so the block cannot be extended in place.
+
+The only way to append is to allocate a **larger block elsewhere, copy every existing value into it, write the new value, and release the old block.** That is a resize.
+
+If the new block is sized to fit exactly — one slot larger each time — then every single append is a resize. Appending 16 values costs 0 + 1 + 2 + ... + 15 = **120 element-copies**, and appending *n* values costs n(n−1)/2 copies. Growth by a fixed amount makes appending quadratic.
+
+## How it works
+
+The fix is to make the new block **bigger than needed**. A resize copies the same number of elements whether the new block has one spare slot or a thousand, so asking for extra room is close to free.
+
+The textbook rule is **capacity doubling**: when the block is full, request twice the current capacity.
+
+### Hand trace: 16 appends, doubling
+
+Start with capacity 0. An append resizes only when `length === capacity`.
+
+| Append | length before | capacity before → after | Resize? | Elements copied |
+|---|---|---|---|---|
+| 1 | 0 | 0 → 1 | yes | 0 |
+| 2 | 1 | 1 → 2 | yes | 1 |
+| 3 | 2 | 2 → 4 | yes | 2 |
+| 4 | 3 | 4 | no | 0 |
+| 5 | 4 | 4 → 8 | yes | 4 |
+| 6 | 5 | 8 | no | 0 |
+| 7 | 6 | 8 | no | 0 |
+| 8 | 7 | 8 | no | 0 |
+| 9 | 8 | 8 → 16 | yes | 8 |
+| 10–16 | 9–15 | 16 | no | 0 |
+
+Five of the sixteen appends resized. Total copies: 0 + 1 + 2 + 4 + 8 = **15**.
+
+### Reading the trace
+
+The resizes land on appends 1, 2, 3, 5, 9, 17, 33 — the gaps between them double.
+
+Each resize costs more than the last, and each resize buys twice as many free appends as the last. Those two effects cancel: the expensive appends get rarer at exactly the rate they get costlier.
+
+| 16 appends | Total element-copies | Copies per append |
+|---|---|---|
+| Grow by 1 | 120 | 7.5, and rising with n |
+| Doubling | 15 | under 1, and staying there |
+
+### Amortised cost
+
+**Amortised cost** is the total cost of a sequence of operations divided by the number of operations. It is not the cost of any one operation; it is what each operation costs on average when the run is long.
+
+A single append is O(n) in the worst case — the resize copies every element. Across n appends the copies sum to n + n/2 + n/4 + ... which stays under 2n, so the amortised cost per append is **O(1)**.
+
+Both statements are true at once. "Append is O(1)" is shorthand that drops the word *amortised*; the unqualified worst case for one append is O(n).
+
+Removing the last element never resizes. It decrements `length` and leaves the block untouched, so it is O(1) outright, with no amortising needed.
+
+## The invariant
+
+**`0 ≤ length ≤ capacity` holds before and after every operation.** An append that would break it resizes first, then writes.
+
+## Implementation
+
+```js
+class DynamicArray {
+  constructor() {
+    this.data = new Array(1); // the block
+    this.length = 0;          // slots used
+    this.capacity = 1;        // slots reserved
+  }
+
+  push(value) {
+    // Invariant: length <= capacity, checked before every write.
+    if (this.length === this.capacity) {
+      this.resize(this.capacity * 2);
+    }
+    this.data[this.length] = value; // O(1): write one slot
+    this.length++;
+  }
+
+  resize(newCapacity) {
+    const bigger = new Array(newCapacity);
+    for (let i = 0; i < this.length; i++) {
+      bigger[i] = this.data[i]; // the O(n) step, run rarely
+    }
+    this.data = bigger;
+    this.capacity = newCapacity;
+  }
+
+  pop() {
+    if (this.length === 0) return undefined;
+    const value = this.data[this.length - 1];
+    this.length--; // capacity is deliberately left alone
+    return value;
+  }
+}
+```
+
+## How JavaScript arrays really behave
+
+A JavaScript array is a dynamic array with the resizing hidden. `arr.length` is visible; capacity is not, so a `push` gives no signal about whether it copied nothing or copied a million values.
+
+V8 does not double. Its growth rule is:
+
+```
+newCapacity = oldCapacity + (oldCapacity >> 1) + 16
+```
+
+`>> 1` is integer division by two, so the block grows by **half again, plus a flat 16 slots**. Pushing onto an empty array produces a block of 17 slots — sixteen of them spare — and the next sixteen pushes copy nothing.
+
+| Growth factor | Buys you | Costs you |
+|---|---|---|
+| 2× | Fewer resizes, longer free runs | Up to half the block sitting unused |
+| 1.5× + 16 | Tighter memory, cheap small arrays | Slightly more frequent resizes |
+
+Both are multiplying rules, so both give amortised O(1). Only a fixed-increment rule loses that.
+
+## Complexity
+
+| Operation | Worst case | Amortised | Why |
+|---|---|---|---|
+| Append | O(n) | O(1) | Resizes double in cost and halve in frequency |
+| Remove last | O(1) | O(1) | Decrements length; never copies |
+| Read by index | O(1) | O(1) | Address arithmetic on a contiguous block |
+
+## Key terms
+
+| Term | Plain-English meaning |
+|---|---|
+| Capacity | Slots the block has room for, used or not |
+| Resize | Allocating a larger block, copying the values across, releasing the old one |
+| Amortised cost | Total cost of a long run of operations, divided by how many there were |
+
+## Practice
+
+Both of these end with an output array whose size was not known when the work began.
+
+<Problems />
+
+<Solution problem="66. Plus One">
+
+**Approach.** Digits are stored most-significant first, so the increment starts at the last index and moves left. Any digit below 9 absorbs the increment and the block is returned unchanged.
+
+A 9 becomes 0 and the carry moves left. If the loop runs off the front, every digit was a 9 — the result needs one more digit than the block has slots, so a larger block is allocated.
+
+**Invariant.** The loop only continues while a carry is outstanding, and every index it has passed is already 0.
+
+```js
+var plusOne = function (digits) {
+  for (let i = digits.length - 1; i >= 0; i--) {
+    if (digits[i] < 9) {
+      digits[i]++;
+      return digits; // no carry out — the block is untouched in size
+    }
+    digits[i] = 0; // 9 + 1 = 10, keep the 0 and carry left
+  }
+
+  // Fell off the front: 999 -> 1000 needs n + 1 slots.
+  const result = new Array(digits.length + 1).fill(0);
+  result[0] = 1;
+  return result;
+};
+```
+
+Hand trace for `[9,9]`:
+
+| i | digit | action | array |
+| --- | --- | --- | --- |
+| 1 | 9 | set 0, carry | `[9,0]` |
+| 0 | 9 | set 0, carry | `[0,0]` |
+| — | — | loop exits, allocate 3 slots | `[1,0,0]` |
+
+**Cost.** Time O(n). The common case allocates nothing; the all-nines case allocates one larger block, which is exactly the resize described above.
+
+</Solution>
+
+<Solution problem="1441. Build an Array With Stack Operations">
+
+**Approach.** The stream `1, 2, ..., n` is read in order. Every number read produces a `"Push"`; a number the target does not want produces a `"Pop"` immediately after.
+
+Since `target` is strictly increasing, whatever has been kept so far is always a prefix of it. So a single pointer `j` into the target is enough state — the kept values need never be stored.
+
+**Invariant.** The kept values are exactly `target[0 .. j-1]`, which means the work is finished when `j` reaches `target.length`.
+
+```js
+var buildArray = function (target, n) {
+  const result = [];
+  let j = 0;
+
+  // Invariant: kept values are exactly target[0..j-1].
+  for (let i = 1; j < target.length; i++) {
+    result.push("Push");
+    if (target[j] === i) j++; // wanted — keep it
+    else result.push("Pop"); // not wanted — discard it
+  }
+
+  return result;
+};
+```
+
+Hand trace for `target = [1,3]`, `n = 3`:
+
+| i | `target[j]` | emitted | j after |
+| --- | --- | --- | --- |
+| 1 | 1 | `Push` | 1 |
+| 2 | 3 | `Push`, `Pop` | 1 |
+| 3 | 3 | `Push` | 2 — loop ends |
+
+**Cost.** The loop runs once per stream value up to the last target value, so time is O(L) where `L` is that value. `result` grows by append, which is where the amortised argument applies; no other memory is used.
+
+A tempting shortcut is to keep the kept values in an array and compare it to the target with `join("")` each iteration. That is correct here but costs O(L × m), since it rebuilds two strings on every pass. It is also fragile as an equality test in general — `[1,23]` and `[12,3]` both join to `"123"`.
+
+</Solution>
+
+## TL;DR
+
+- An array cannot grow in place, so appending sometimes means allocating a bigger block and copying everything into it.
+- Capacity is reserved ahead of length; an append only copies when the two are equal.
+- Growing by a fixed amount resizes on every append and makes n appends cost O(n²).
+- Growing by a multiplying factor makes resizes rarer at the same rate they get costlier, so n appends cost O(n).
+- One append is O(n) in the worst case and O(1) amortised. Removing the last element is O(1) with no qualifier.
+- V8 grows a JavaScript array by half again plus 16 slots, and never shows you the capacity.

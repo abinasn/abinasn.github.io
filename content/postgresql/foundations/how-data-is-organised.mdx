@@ -1,0 +1,216 @@
+---
+title: "How Data Is Organised"
+slug: "how-data-is-organised"
+series: "postgresql"
+order: 2
+date: "2026-09-08"
+draft: false
+summary: "PostgreSQL stores data in tables whose column names and types are declared before any data is written, and rejects at write time anything that does not match that declaration."
+tags: ["postgresql", "fundamentals", "schema", "tables", "data-types"]
+---
+
+## Definition
+
+A **table** is a named collection of data about one kind of thing — students, invoices, sensor readings. A **column** is a labelled slot within that table, such as `age`. A **row** is one complete entry: one value for every column the table declares.
+
+The set of column names and the kind of value each column accepts is the table's **schema**. A **type** is that kind of value: a whole number, a string of characters, a calendar date, a true/false flag. PostgreSQL requires the schema to be declared before a single row may be inserted, and enforces it on every write. This arrangement is called **schema-on-write**.
+
+## How it works
+
+### The problem being solved
+
+Consider the strawman alternative — records kept as free-form lines in a text file, with no declared shape:
+
+```
+Abinas, 34
+Riya | age 12 | class 6A
+Sam, twelve
+```
+
+Retrieving one person's age from this requires code that copes with all of the following at once.
+
+| Line | Obstacle |
+|---|---|
+| 1 | Fields separated by a comma |
+| 2 | Fields separated by a pipe, plus a field the other lines lack |
+| 3 | The age written as the word `twelve` rather than a numeral |
+
+Nothing prevented any line from being written. The inconsistency surfaces only later, in whichever code attempts to read it. A declared schema moves that failure earlier: to the moment the bad data is written, where it can be rejected outright.
+
+### The declaration
+
+```sql
+CREATE TABLE students (
+  id    integer,
+  name  text,
+  age   integer
+);
+```
+
+Running this produces an empty table with three declared columns and zero rows.
+
+### Trace: three write attempts
+
+Against the table above, each statement below is evaluated and the outcome recorded.
+
+**Attempt 1** — a row matching the schema.
+
+```sql
+INSERT INTO students VALUES (1, 'Abinas', 34);
+```
+
+| Check | Result |
+|---|---|
+| Value count matches column count (3 = 3) | pass |
+| `1` is a valid `integer` | pass |
+| `'Abinas'` is valid `text` | pass |
+| `34` is a valid `integer` | pass |
+
+Outcome: the row is written.
+
+**Attempt 2** — a value of the wrong type.
+
+```sql
+INSERT INTO students VALUES (3, 'Sam', 'twelve');
+```
+
+| Check | Result |
+|---|---|
+| Value count matches column count (3 = 3) | pass |
+| `3` is a valid `integer` | pass |
+| `'Sam'` is valid `text` | pass |
+| `'twelve'` converted to `integer` | fail |
+
+```
+ERROR:  invalid input syntax for type integer: "twelve"
+```
+
+Outcome: nothing is written. The statement is rejected as a whole; the two valid values are discarded along with the invalid one.
+
+**Attempt 3** — too many values.
+
+```sql
+INSERT INTO students VALUES (4, 'Priya', 15, 'Bhubaneswar');
+```
+
+| Check | Result |
+|---|---|
+| Value count matches column count (4 ≠ 3) | fail |
+
+```
+ERROR:  INSERT has more expressions than target columns
+```
+
+Outcome: nothing is written, and no value is examined at all. The shape of the row is checked before the contents of it, so the fourth value's own validity never becomes relevant.
+
+### The resulting table
+
+```
+ id |  name  | age
+----+--------+-----
+  1 | Abinas |  34
+```
+
+Only Attempt 1 survived.
+
+### What is stored where
+
+`CREATE TABLE` writes to two places.
+
+| Destination | Contents |
+|---|---|
+| The system catalog | One entry naming the table, plus one entry per column recording its name, its type, and its ordinal position |
+| A file on disk | The rows themselves, initially empty |
+
+The **system catalog** is the set of tables PostgreSQL uses to record the definitions of every other table. Table entries live in a catalog table named `pg_class`; column entries live in `pg_attribute`.
+
+Because every row of a table carries the same columns in the same order, values are stored consecutively without repeating the column names per row:
+
+```
+row 1:  [ 1 ][ Abinas ][ 34 ]
+row 2:  [ 2 ][ Riya   ][ 12 ]
+```
+
+Reading the `age` of every row therefore requires one catalog lookup — establishing that `age` is the third column — followed by a jump to the third position within each row. The column name is never searched for inside the stored data.
+
+## Implementation
+
+```sql
+-- Declare the table. Column name first, then its type.
+CREATE TABLE students (
+  id         integer,  -- whole number, no fractional part
+  name       text,     -- characters, no length limit
+  age        integer,  -- whole number; arithmetic on it is meaningful
+  city       text,
+  pincode    text,     -- digits, but a label rather than a quantity
+  joined_on  date      -- a calendar day, without a time of day
+);
+```
+
+Inspecting the declaration in `psql`, the PostgreSQL command-line client:
+
+```
+learnpg=# \d students
+                 Table "public.students"
+  Column   |  Type   | Collation | Nullable | Default
+-----------+---------+-----------+----------+---------
+ id        | integer |           |          |
+ name      | text    |           |          |
+ age       | integer |           |          |
+ city      | text    |           |          |
+ pincode   | text    |           |          |
+ joined_on | date    |           |          |
+```
+
+Graphical clients such as pgAdmin, DBeaver and TablePlus present the same information when the table is selected in their object browser.
+
+### Choosing between a numeric type and a text type
+
+Digits alone do not make a value numeric. The distinguishing test is whether arithmetic on the value is meaningful.
+
+| Column | Meaningful operation | Appropriate type |
+|---|---|---|
+| `age` | Averaging, comparing, adding years | `integer` |
+| `pincode` | None — codes are not summed or averaged | `text` |
+
+Storing a code such as `01234` as `integer` yields the number `1234`; the leading zero is not part of a numeric value and is lost on write. The same reasoning applies to telephone numbers, account numbers and order references.
+
+### Identifier case
+
+An identifier written without double quotes is folded to lower case before it is stored:
+
+```sql
+CREATE TABLE students (joinedOn date);
+```
+
+```
+ Column   | Type
+----------+------
+ joinedon | date
+```
+
+The column's recorded name is `joinedon`. An unquoted reference such as `SELECT joinedOn` is folded identically and therefore resolves, whereas the quoted form `SELECT "joinedOn"` requests that exact spelling and fails to find it. Lower-case names separated by underscores — `joined_on` — avoid the discrepancy entirely and are the prevailing convention.
+
+Case folding of unquoted identifiers is standard SQL behaviour, though the standard folds to upper case and PostgreSQL folds to lower case. `CREATE TABLE`, `INSERT`, `integer` and `date` are standard SQL. The `text` type is a PostgreSQL extension; the standard equivalent is `varchar(n)`, which requires a maximum length.
+
+## The invariant
+
+**Every row in a table has exactly the columns the table declares, in the declared order, holding values of the declared types. A write that would violate this is rejected in full, and no part of it is stored.**
+
+Two consequences follow.
+
+| Consequence | Detail |
+|---|---|
+| A column belongs to the table, not to a row | Adding a column adds it to every existing row. A single row cannot carry an extra field of its own. |
+| Invalid data cannot enter | Reading code may assume the declared shape holds, because no other shape was ever admitted. |
+
+The cost is paid at design time and at change time. The schema must be decided before any data exists, and altering it later affects every row already stored. In exchange, the cost of validating shape and type on every read — and of discovering violations only once they have already been stored — is eliminated.
+
+## TL;DR
+
+- A table holds one kind of thing; a column is a labelled slot; a row is one entry with a value for every column.
+- The schema is the declared list of column names and their types, and it is enforced when data is written, not when it is read.
+- `INSERT` is checked for value count first and value types second; either failure rejects the entire statement.
+- The catalog records column names, types and positions once, so stored rows contain values only, positionally.
+- A value composed of digits belongs in a numeric type only when arithmetic on it is meaningful; codes belong in `text`.
+- Unquoted identifiers are folded to lower case, which makes lower-case, underscore-separated names the safe convention.

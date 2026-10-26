@@ -1,0 +1,355 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #ffffff;
+  --color-card: #f7f7f7;
+  --color-chip: #ededed;
+  --color-hover: #f5f5f5;
+
+  --color-panel-deep: #14161a;
+  --color-panel: #1b1e23;
+  --color-panel-fg: #fafafa;
+  --color-panel-line: #2a2e34;
+  --color-panel-node: #22262c;
+  --color-panel-stroke: #3d434b;
+  --color-panel-text: #c3c7cd;
+  --color-panel-muted: #a9adb5;
+  --color-panel-dot: #2e3238;
+
+  --color-ink: #14161a;
+  --color-ink-soft: #4a4d55;
+  --color-ink-muted: #7c7f87;
+  --color-dim: #9b9b9b;
+  --color-placeholder: #b0b0b0;
+
+  --color-line: #e6e6e6;
+  --color-line-soft: #ececec;
+  --color-line-dash: #d6d6d6;
+
+  --color-accent: #0d9488;
+  --color-accent-soft: #2dd4bf;
+  --color-selection: #ccfbf1;
+
+  --color-easy: #2f7a4d;
+  --color-medium: #98651a;
+  --color-hard: #a3352a;
+
+  --color-scene: #fafafa;
+  --color-scene-sunken: #f2f2f2;
+  --color-scene-line: #e6e6e6;
+  --color-scene-ink: #14161a;
+  --color-scene-muted: #7c7f87;
+  --color-scene-faint: #b5b5b5;
+  --color-scene-ok: #2f7a4d;
+  --color-scene-warn: #98651a;
+  --color-scene-bad: #a3352a;
+  --color-scene-alt: #6d28d9;
+
+  --color-scene-media: #d9d9d9;
+  --color-scene-media-ink: #14161a;
+
+  --color-scene-inverse: #fafafa;
+
+  --container-content: 67.5rem;
+
+  --container-hub: 52.5rem;
+
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  --font-indic: "Noto Sans Devanagari", "Nirmala UI", "Mangal", var(--font-manrope), sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --color-paper: #121316;
+  --color-card: #191b1f;
+  --color-chip: #23262b;
+  --color-hover: #1f2226;
+
+  --color-panel-deep: #0c0e11;
+  --color-panel: #181b1f;
+
+  --color-ink: #f0f0f0;
+  --color-ink-soft: #b6b8bd;
+  --color-ink-muted: #8b8e95;
+  --color-dim: #7b7b7b;
+  --color-placeholder: #6a6d73;
+
+  --color-line: #2a2d33;
+  --color-line-soft: #24272c;
+  --color-line-dash: #383b41;
+
+  --color-accent: #2dd4bf;
+  --color-accent-soft: #5eead4;
+  --color-selection: #134e4a;
+
+  --color-easy: #4caf7d;
+  --color-medium: #d3a24a;
+  --color-hard: #e0685c;
+
+  --color-scene: #11181a;
+  --color-scene-sunken: #151d1f;
+  --color-scene-line: #1f2c2e;
+  --color-scene-ink: #e4e4e7;
+  --color-scene-muted: #7d8a8c;
+  --color-scene-faint: #3a4749;
+  --color-scene-ok: #34d399;
+  --color-scene-warn: #f59e0b;
+  --color-scene-bad: #f87171;
+  --color-scene-alt: #a78bfa;
+
+  --color-scene-media: #0a0f0f;
+  --color-scene-media-ink: #f0f0f0;
+  --color-scene-inverse: #0a0f0f;
+}
+
+:root {
+  --shadow-scene: 0 16px 36px -28px rgb(20 22 26 / 0.3);
+  --shadow-card-hover: 0 18px 40px -28px rgb(20 22 26 / 0.35);
+
+  --header-h: 3.75rem;
+  --screen-h: calc(100dvh / var(--ui-zoom, 1) - var(--header-h));
+
+  --hero-avatar: clamp(5.5rem,
+      max(calc(100svh / var(--ui-zoom, 1) * 0.17),
+        calc(100svh / var(--ui-zoom, 1) - 40rem)),
+      22rem);
+
+  --glow-strength: 16%;
+
+  --rail-offset: 0.625rem;
+
+  --hub-sidebar-w: 19rem;
+  --hub-toc-w: 15rem;
+}
+
+@media (width >=48rem) {
+  :root {
+    --header-h: 4.25rem;
+    --rail-offset: 1.75rem;
+  }
+}
+
+@media (width >=64rem) and (height <=1000px) {
+  :root {
+    --ui-zoom: 0.9375;
+  }
+}
+
+@media (width >=64rem) and (height <=860px) {
+  :root {
+    --ui-zoom: 0.875;
+  }
+}
+
+:root[data-theme="dark"] {
+  --shadow-scene: 0 30px 80px -30px rgb(0 0 0 / 0.7);
+  --shadow-card-hover: 0 18px 44px -30px color-mix(in oklab, var(--color-accent) 55%, transparent);
+
+  --glow-strength: 11%;
+}
+
+@custom-variant dark ([data-theme="dark"] &);
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes bob {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes blink {
+
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes drift-a {
+
+  0%,
+  100% {
+    transform: translate3d(-8%, -4%, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(10%, 6%, 0) scale(1.18);
+  }
+}
+
+@keyframes drift-b {
+
+  0%,
+  100% {
+    transform: translate3d(6%, 5%, 0) scale(1.12);
+  }
+
+  50% {
+    transform: translate3d(-9%, -7%, 0) scale(0.94);
+  }
+}
+
+@keyframes ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+
+  70%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes bar {
+
+  0%,
+  100% {
+    height: 18%;
+    opacity: 0.55;
+  }
+
+  50% {
+    height: var(--h, 70%);
+    opacity: 1;
+  }
+}
+
+@keyframes hint {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.js [data-reveal] {
+  opacity: 0;
+}
+
+.js [data-reveal="in"] {
+  animation: fade 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--reveal-delay, 0ms) both;
+}
+
+[data-link-hint] {
+  opacity: 0;
+}
+
+[data-link-hint="pending"] {
+  animation: hint 0.2s ease-out 0.12s both;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-h) * var(--ui-zoom, 1));
+  }
+
+  body {
+    zoom: var(--ui-zoom, 1);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: var(--color-selection);
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line);
+    border-radius: 9px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-placeholder);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

@@ -1,0 +1,344 @@
+---
+title: "Two Pointers in the Same Direction"
+slug: "two-pointers-same-direction"
+series: "dsa"
+order: 10
+date: "2026-09-20"
+draft: false
+problems:
+  - name: "283. Move Zeroes"
+    difficulty: "Easy"
+    idea: "Swap kept values forward so the skipped zeros collect at the back in one pass"
+    url: "https://leetcode.com/problems/move-zeroes/"
+  - name: "26. Remove Duplicates from Sorted Array"
+    difficulty: "Easy"
+    idea: "A value is kept when it differs from the last value written"
+    url: "https://leetcode.com/problems/remove-duplicates-from-sorted-array/"
+  - name: "75. Sort Colors"
+    difficulty: "Medium"
+    idea: "Three regions grown from both ends while one read pointer moves forward"
+    url: "https://leetcode.com/problems/sort-colors/"
+summary: "How a read index and a write index walking the same way remove or group values inside an array without a second array and without shifting."
+tags: ["dsa", "arrays", "two-pointers", "in-place", "javascript"]
+---
+
+## Definition
+
+**Two pointers in the same direction** is a technique where two indices walk an array left to right. One index reads every value, and the other marks where the next kept value should be written.
+
+The reader is conventionally called `read` and the writer `write`. `read` never skips a slot, and `write` only moves when a value is kept.
+
+```
+[ 1 ] [ 3 ] [ 0 ] [ 0 ] [ 12 ]
+              ^            ^
+            write         read
+```
+
+## The problem it solves
+
+The task is to remove or regroup values **in place**: inside the original array, using only a fixed amount of extra memory, written O(1) extra space.
+
+| Approach | Time | Extra space | Problem |
+| --- | --- | --- | --- |
+| `nums.filter(...)` | O(n) | O(n) | Builds a second array |
+| `splice` each unwanted value | O(n²) | O(1) | Every deletion shifts all later values |
+| Read/write pointers | O(n) | O(1) | — |
+
+An array is one unbroken block of memory, so it cannot hold a gap. `splice(i, 1)` closes the gap by copying every value after `i` one slot to the left.
+
+Hand trace: removing zeros from `[0, 0, 0, 7, 8, 9]` with `splice`:
+
+| Step | Array before | Values shifted |
+| --- | --- | --- |
+| 1 | `[0,0,0,7,8,9]` | 5 |
+| 2 | `[0,0,7,8,9]` | 4 |
+| 3 | `[0,7,8,9]` | 3 |
+| | **Total** | **12** |
+
+Only three moves were needed: `7`, `8` and `9` each go once to slots 0, 1 and 2. The other nine shifts were wasted, and with more unwanted values the waste grows as n(n−1)/2.
+
+## How it works
+
+### Read and write
+
+For every value, `read` applies a **keep test**. A kept value is copied to `nums[write]`, and `write` steps forward; a skipped value is simply passed over.
+
+Hand trace: keep non-zero values of `[0, 1, 0, 3, 12]`:
+
+| read | value | action | write after | array after |
+| --- | --- | --- | --- | --- |
+| 0 | 0 | skip | 0 | `[0,1,0,3,12]` |
+| 1 | 1 | `nums[0] = 1` | 1 | `[1,1,0,3,12]` |
+| 2 | 0 | skip | 1 | `[1,1,0,3,12]` |
+| 3 | 3 | `nums[1] = 3` | 2 | `[1,3,0,3,12]` |
+| 4 | 12 | `nums[2] = 12` | 3 | `[1,3,12,3,12]` |
+
+- The kept values `1, 3, 12` fill slots 0–2 in their original order.
+- `write` ends at 3, the number of values kept.
+- Slots 3–4 hold the **stale tail**: leftover values the loop never cleaned. They are no longer part of the answer.
+- Five reads, three writes. Each kept value moved exactly once.
+
+### The keep test can look at the output
+
+Only the keep test changes between problems. In a **sorted** array, duplicates sit next to each other, so a value is new exactly when it differs from the last value written, `nums[write - 1]`.
+
+Hand trace: remove duplicates from `[1, 1, 2, 2, 2, 3]`, with `nums[0]` always kept, so `write` and `read` start at 1:
+
+| read | value | `nums[write-1]` | action | write after | array after |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 | 1 | skip | 1 | `[1,1,2,2,2,3]` |
+| 2 | 2 | 1 | `nums[1] = 2` | 2 | `[1,2,2,2,2,3]` |
+| 3 | 2 | 2 | skip | 2 | `[1,2,2,2,2,3]` |
+| 4 | 2 | 2 | skip | 2 | `[1,2,2,2,2,3]` |
+| 5 | 3 | 2 | `nums[2] = 3` | 3 | `[1,2,3,2,2,3]` |
+
+### Copy versus swap: partitioning
+
+Copying overwrites skipped values, which is right when they are being removed. Swapping `nums[read]` with `nums[write]` instead sends each skipped value into the tail, so no value is lost.
+
+Splitting an array into groups by a test, without losing any value, is called **partitioning**.
+
+Hand trace: partition `[0, 1, 0, 3, 12]` into non-zero then zero, by swapping:
+
+| read | value | action | write after | array after |
+| --- | --- | --- | --- | --- |
+| 0 | 0 | skip | 0 | `[0,1,0,3,12]` |
+| 1 | 1 | swap slots 0, 1 | 1 | `[1,0,0,3,12]` |
+| 2 | 0 | skip | 1 | `[1,0,0,3,12]` |
+| 3 | 3 | swap slots 1, 3 | 2 | `[1,3,0,0,12]` |
+| 4 | 12 | swap slots 2, 4 | 3 | `[1,3,12,0,0]` |
+
+| Choice | Buys | Costs |
+| --- | --- | --- |
+| Copy | One write per kept value | Skipped values are destroyed; a stale tail is left |
+| Swap | Every value survives, grouped | Two writes per kept value; the skipped group may be reordered |
+
+The kept group always keeps its original order. The skipped group may not: each swap moves the first skipped value to the back of its group.
+
+### Three regions
+
+The same idea extends to three groups. For an array holding only `0`, `1` and `2`, one read pointer `mid` walks forward while `0`s are written at `low` from the left and `2`s at `high` from the right. This arrangement is known as the **Dutch national flag** partition, after the flag's three bands.
+
+```
+[  0s  |  1s  |  unseen  |  2s  ]
+ 0..low-1  low..mid-1  mid..high  high+1..n-1
+```
+
+| `nums[mid]` | Action | Why |
+| --- | --- | --- |
+| 0 | swap `low`, `mid`; `low++`, `mid++` | The value arriving from `low` comes from the 1s region, so it has already been read |
+| 1 | `mid++` | Already in its region |
+| 2 | swap `mid`, `high`; `high--` only | The value arriving from `high` is unseen and must still be tested |
+
+Hand trace on `[2, 0, 2, 1, 1, 0]`:
+
+| low | mid | high | `nums[mid]` | action | array after |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 0 | 5 | 2 | swap(0,5), high → 4 | `[0,0,2,1,1,2]` |
+| 0 | 0 | 4 | 0 | swap(0,0), low → 1, mid → 1 | `[0,0,2,1,1,2]` |
+| 1 | 1 | 4 | 0 | swap(1,1), low → 2, mid → 2 | `[0,0,2,1,1,2]` |
+| 2 | 2 | 4 | 2 | swap(2,4), high → 3 | `[0,0,1,1,2,2]` |
+| 2 | 2 | 3 | 1 | mid → 3 | `[0,0,1,1,2,2]` |
+| 2 | 3 | 3 | 1 | mid → 4; mid > high, stop | `[0,0,1,1,2,2]` |
+
+## The invariant
+
+Checking the first trace at the start of each iteration:
+
+| read | write | `nums[0..write-1]` | kept values among `nums[0..read-1]` |
+| --- | --- | --- | --- |
+| 0 | 0 | `[]` | none |
+| 2 | 1 | `[1]` | 1 |
+| 4 | 2 | `[1,3]` | 1, 3 |
+| 5 | 3 | `[1,3,12]` | 1, 3, 12 |
+
+> **`nums[0..write-1]` holds exactly the kept values from `nums[0..read-1]`, in their original order.**
+
+When the loop ends, `read` equals the array length, so the front holds every kept value. That is the proof the loop is correct.
+
+Why overwriting never destroys unread data:
+
+- `read` rises by 1 every iteration; `write` rises by 1 or 0.
+- Both start equal, so **`write ≤ read` always**.
+- `write` therefore only points at slots `read` has already visited. When the two are equal, a value is copied onto itself, which is harmless.
+
+## Implementation
+
+```js
+// Keep the values that pass `keep`, in order, at the front of `nums`.
+// Returns how many were kept; nums[count..] is the stale tail.
+function keepInPlace(nums, keep) {
+  let write = 0;                                  // next slot for a kept value
+  for (let read = 0; read < nums.length; read++) {
+    // invariant: nums[0..write-1] = kept values of nums[0..read-1], in order
+    if (keep(nums[read])) {
+      nums[write] = nums[read];                   // one move, straight to its final slot
+      write++;
+    }
+  }
+  return write;
+}
+
+const nums = [0, 1, 0, 3, 12];
+const count = keepInPlace(nums, (x) => x !== 0);
+// count = 3, nums.slice(0, count) = [1, 3, 12]
+```
+
+For partitioning, replace the copy with a swap: `[nums[write], nums[read]] = [nums[read], nums[write]]`.
+
+## Complexity
+
+| Version | Time | Space | Why |
+| --- | --- | --- | --- |
+| Read/write (copy or swap) | O(n) | O(1) | `read` visits each slot once and does constant work there; only two indices are stored |
+| Three regions | O(n) | O(1) | Every iteration either advances `mid` or lowers `high`, so the unseen region shrinks by one each step |
+
+## Key terms
+
+| Term | Plain-English meaning |
+| --- | --- |
+| In place | Rearranging values inside the original array with only a fixed amount of extra memory |
+| Keep test | The per-value condition that decides whether `read` hands the value to `write` |
+| Stale tail | Slots from `write` onward after a copy pass; they still hold old values but are no longer part of the result |
+| Partitioning | Splitting an array into groups by a test without losing any value |
+
+## Edge cases
+
+| Case | What breaks | How the code handles it |
+| --- | --- | --- |
+| Empty array | Starting `write` at 1 for duplicates would claim one kept value | Return 0 before the loop when the length is 0 |
+| Nothing kept | — | `write` stays 0; the whole array is stale tail |
+| Everything kept | — | `write === read` every step; each value is copied or swapped onto itself |
+| Three regions, value arriving from `high` | Advancing `mid` skips a value never tested: `[2,1,2]` ends as `[2,1,2]` | Only `high--` after a swap with `high` |
+| Three regions, loop condition | `mid < high` stops with one slot unseen: `[1,0]` stays `[1,0]` | Loop while `mid <= high` |
+
+## When to use
+
+- Values must be removed or grouped **inside** the array, with O(1) extra space.
+- Each value's fate is decided by the value itself, or by the last value written.
+- The kept values must stay in their original order.
+
+## When to avoid
+
+- A new array is allowed and clarity matters more than memory: `filter` says the same thing in one line.
+- The decision for a value depends on values that `read` has not reached yet.
+- The sequence cannot be written to at all. A JavaScript string is immutable, so convert it to an array first.
+
+## Practice
+
+Each of these walks a read index forward and writes kept values behind it.
+
+<Problems />
+
+<Solution problem="283. Move Zeroes">
+
+**Approach.** The zeros must end up at the back and the non-zero values must keep their order. That is a two-region partition, so swap rather than copy; the zeros collect behind `write` without a second pass to fill them in.
+
+**Invariant.** `nums[0..write-1]` holds the non-zero values of `nums[0..read-1]` in order, and `nums[write..read-1]` holds only zeros.
+
+```js
+var moveZeroes = function (nums) {
+  let write = 0;
+  for (let read = 0; read < nums.length; read++) {
+    if (nums[read] !== 0) {
+      // swap sends the zero at `write` back to `read`
+      [nums[write], nums[read]] = [nums[read], nums[write]];
+      write++;
+    }
+  }
+};
+```
+
+Hand trace for `[4, 0, 0, 5]`:
+
+| read | value | action | write after | array after |
+| --- | --- | --- | --- | --- |
+| 0 | 4 | swap(0,0) | 1 | `[4,0,0,5]` |
+| 1 | 0 | skip | 1 | `[4,0,0,5]` |
+| 2 | 0 | skip | 1 | `[4,0,0,5]` |
+| 3 | 5 | swap(1,3) | 2 | `[4,5,0,0]` |
+
+**Cost.** Time O(n), space O(1).
+
+</Solution>
+
+<Solution problem="26. Remove Duplicates from Sorted Array">
+
+**Approach.** Sorted order places equal values side by side, so comparing against the last value written is enough to spot a new one. Duplicates are being removed rather than grouped, so a copy is sufficient; the stale tail is ignored.
+
+**Invariant.** `nums[0..write-1]` holds each distinct value of `nums[0..read-1]` exactly once, in order.
+
+```js
+var removeDuplicates = function (nums) {
+  if (nums.length === 0) return 0;
+  let write = 1;                              // nums[0] is always kept
+  for (let read = 1; read < nums.length; read++) {
+    if (nums[read] !== nums[write - 1]) {     // differs from last kept
+      nums[write] = nums[read];
+      write++;
+    }
+  }
+  return write;
+};
+```
+
+Hand trace for `[1, 1, 2]`:
+
+| read | value | `nums[write-1]` | action | write after | array after |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 1 | 1 | skip | 1 | `[1,1,2]` |
+| 2 | 2 | 1 | `nums[1] = 2` | 2 | `[1,2,2]` |
+
+Returns 2; the first two slots hold `[1, 2]`.
+
+**Cost.** Time O(n), space O(1).
+
+</Solution>
+
+<Solution problem="75. Sort Colors">
+
+**Approach.** Three values means three regions. `mid` reads forward, `0`s are swapped down to `low`, and `2`s are swapped up to `high`. After a swap with `high` the incoming value has not been tested, so `mid` stays put.
+
+**Invariant.** `nums[0..low-1]` are all 0, `nums[low..mid-1]` are all 1, `nums[high+1..]` are all 2, and `nums[mid..high]` is unseen.
+
+```js
+var sortColors = function (nums) {
+  let low = 0, mid = 0, high = nums.length - 1;
+  while (mid <= high) {                       // slot `high` is unseen until mid passes it
+    if (nums[mid] === 0) {
+      [nums[low], nums[mid]] = [nums[mid], nums[low]];
+      low++;
+      mid++;
+    } else if (nums[mid] === 1) {
+      mid++;
+    } else {
+      [nums[mid], nums[high]] = [nums[high], nums[mid]];
+      high--;                                 // incoming value is unseen: do not move mid
+    }
+  }
+};
+```
+
+Hand trace for `[2, 0, 1]`:
+
+| low | mid | high | `nums[mid]` | action | array after |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 0 | 2 | 2 | swap(0,2), high → 1 | `[1,0,2]` |
+| 0 | 0 | 1 | 1 | mid → 1 | `[1,0,2]` |
+| 0 | 1 | 1 | 0 | swap(0,1), low → 1, mid → 2 | `[0,1,2]` |
+
+`mid` is now 2 and `high` is 1, so the loop stops.
+
+**Cost.** Time O(n) in a single pass, space O(1).
+
+</Solution>
+
+## TL;DR
+
+- Two indices walk the same way: `read` visits every value, `write` marks where the next kept value goes.
+- Each kept value moves once, straight to its final slot, replacing the O(n²) shifting of repeated `splice`.
+- Invariant: `nums[0..write-1]` holds exactly the kept values seen so far, in order; since `write ≤ read`, no unread value is ever overwritten.
+- Only the keep test changes between problems, and it may compare against the last value written.
+- Copy to remove values; swap to partition them into groups without losing any.
+- Three groups need three indices, and a value swapped in from the right is unseen, so the reader does not advance past it.
+- Time O(n), space O(1).

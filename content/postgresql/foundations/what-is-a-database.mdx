@@ -1,0 +1,117 @@
+---
+title: "What is a Database"
+slug: "what-is-a-database"
+series: "postgresql"
+order: 1
+date: "2026-09-07"
+draft: false
+summary: "A database is a separate running program that owns application data and serves it over a connection, replacing ad-hoc storage in files or memory."
+tags: ["postgresql", "fundamentals", "client-server"]
+---
+
+## Definition
+
+A **database** is a program whose job is to store data in an organised form and return it on request. It runs continuously as its own process, separate from the application that uses it.
+
+An **application** is the program being written — a web API, a script, a background worker. The application does not open the database's storage files itself. It sends a request to the database program and receives an answer back. That separation is the defining property.
+
+## How it works
+
+### The naive approaches
+
+Two storage approaches come before a database. Both are strawmen here — they are presented to show the specific failures a database is built to prevent.
+
+**Approach 1 — keep data in memory.** Memory (RAM) is working space that exists only while a program runs.
+
+```js
+let users = [];
+users.push({ id: 1, name: "Ada" });
+```
+
+**Approach 2 — keep data in a file.** A file persists on disk, so it survives a restart.
+
+```js
+fs.writeFileSync("users.json", JSON.stringify(users));
+```
+
+### Trace: what each approach does under three events
+
+| Event | In memory | In a plain file | In a database |
+|---|---|---|---|
+| Process restarts | All data gone | Data survives | Data survives |
+| Two writers at once | Last write silently wins | File overwritten, records lost | Both writes are coordinated |
+| Find one record | Scan the whole array | Read and parse the whole file | Located directly |
+
+### Trace: the concurrent-write failure
+
+Two processes, A and B, both update the same file. The file starts with one record.
+
+| Step | Process A | Process B | File on disk |
+|---|---|---|---|
+| 1 | Reads file: `[Ada]` | — | `[Ada]` |
+| 2 | — | Reads file: `[Ada]` | `[Ada]` |
+| 3 | Appends Grace, writes | — | `[Ada, Grace]` |
+| 4 | — | Appends Alan, writes | `[Ada, Alan]` |
+
+After step 4 the record for Grace is gone. Process B wrote a version of the file built from data it read before A's write existed. Nothing reported an error.
+
+A database prevents this outcome, because every change passes through one program that controls the order in which changes are applied.
+
+### The client-server model
+
+The application and the database are two separate programs communicating over a connection.
+
+| Role | Which program | Responsibility |
+|---|---|---|
+| Client | The application | Sends requests, receives results |
+| Server | The database | Owns the stored data, answers requests |
+
+```
+Application  ──request──▶  Database
+             ◀──result───
+```
+
+Because the database is a separate program, it keeps running when the application stops, and several applications can connect to the same database at once.
+
+## Implementation
+
+Setting up a connection is covered in a later article. Conceptually, an application never touches storage directly:
+
+```js
+// The application does not read or write the storage file.
+// It sends a request to the database program and reads the reply.
+const result = await db.query("...");
+```
+
+The path from a browser to stored data therefore has three parts:
+
+```
+Browser  ──▶  Application (API)  ──▶  Database
+```
+
+Each arrow is a request travelling over a network connection, and a response travelling back.
+
+## The invariant
+
+**A database owns its storage exclusively. All access goes through the database program.**
+
+This holds without exception. No application reads or edits the underlying storage files directly, and correct behaviour depends on that being true.
+
+What it costs:
+
+| Cost | Detail |
+|---|---|
+| An extra program to run | The database must be installed, started, and kept running |
+| Network overhead | Every request crosses a connection rather than a function call |
+| A second language | Requests are written in SQL, not in the application's language |
+
+These costs are accepted in exchange for durability across restarts, safe concurrent writes, and fast retrieval of individual records.
+
+## TL;DR
+
+- A database is a separate, continuously running program that stores data and returns it on request.
+- Memory does not survive a process restart; a plain file does, but offers no protection against two writers overwriting each other.
+- Concurrent writes to a plain file can lose records with no error reported.
+- In the client-server model the application is the client and the database is the server, communicating over a connection.
+- The invariant: the database owns its storage, and all access passes through the database program.
+- The cost is an extra running program, network overhead, and a second language (SQL).

@@ -1,0 +1,347 @@
+---
+title: "Sliding Window with a Frequency Map"
+slug: "sliding-window-frequency-map"
+series: "dsa"
+order: 14
+date: "2026-10-13"
+draft: false
+problems:
+  - name: "567. Permutation in String"
+    difficulty: "Medium"
+    idea: "Fixed window of the pattern's length; stop the moment every letter count agrees."
+    url: "https://leetcode.com/problems/permutation-in-string/"
+  - name: "438. Find All Anagrams in a String"
+    difficulty: "Medium"
+    idea: "Same fixed window, but record every start index where the counts agree instead of stopping."
+    url: "https://leetcode.com/problems/find-all-anagrams-in-a-string/"
+summary: "How to find every stretch of a string that uses exactly the same letters as a pattern, by keeping a running count of letters as a window slides."
+tags: ["dsa", "sliding-window", "frequency-map", "strings", "patterns"]
+---
+
+## Definition
+
+A **frequency map** records how many times each value appears. In a **sliding window** (a run of consecutive characters, tracked by a left and a right index), the frequency map is the window's state: the count of each character currently inside it.
+
+It fits any condition that depends on **which characters and how many**, not on their order. The classic case is the **rearrangement** (also called an **anagram**): two strings with the same letters in the same quantities, in any order.
+
+```
+"bca" is a rearrangement of "abc"    same letters, same counts
+"aab" is NOT a rearrangement of "abb" same letters, different counts
+```
+
+## The problem it solves
+
+Task: does `"eidbaooo"` contain a rearrangement of `"ab"` as a run of consecutive characters?
+
+The direct approach builds a fresh count for every window of length 2:
+
+| Start | Window | Counts built from scratch |
+|---|---|---|
+| 0 | `ei` | e:1, i:1 |
+| 1 | `id` | i:1, d:1 |
+| 2 | `db` | d:1, b:1 |
+| 3 | `ba` | b:1, a:1 ✓ |
+
+Each window recounts every character, and neighbouring windows share all but two of them. For a text of 1,000 characters and a pattern of 100, that is 901 windows × 100 counts = **90,100** count operations, against **1,900** when the counts are updated instead of rebuilt.
+
+## How it works
+
+### 1. Two count maps, one test
+
+| Map | Holds | Changes? |
+|---|---|---|
+| `need` | counts of the pattern | never |
+| `win` | counts of the current window | every slide |
+
+Hand trace for `"bca"` against the pattern `"abc"`:
+
+| Char read | `win` after it |
+|---|---|
+| b | b:1 |
+| c | b:1, c:1 |
+| a | b:1, c:1, a:1 |
+
+`need` for `"abc"` is a:1, b:1, c:1. The two maps are identical, so `"bca"` is a rearrangement.
+
+**Rule:** a window is a rearrangement of the pattern **if and only if** `win` and `need` are identical.
+
+### 2. An array as the map
+
+For lowercase English letters, a 26-slot array works as the map. The code for `'a'` is 97 and the letters run without gaps up to `'z'` (122), so `code − 97` gives a slot from 0 to 25.
+
+```
+'a' → 97 − 97 = 0     'b' → 1     'z' → 122 − 97 = 25
+```
+
+### 3. Sliding the map: one in, one out
+
+The window never gets rebuilt. Each slide makes exactly three moves:
+
+```
+ e  i  d  b  a  o  o  o
+    [--]                  window before the slide
+       [--]               window after the slide
+ ↑     ↑
+ leaves enters
+```
+
+| Move | What happens | Code |
+|---|---|---|
+| 1. Add | the character at `right` enters | `win[enter]++` |
+| 2. Remove | the character just left of the window leaves | `win[leave]--` |
+| 3. Check | do `win` and `need` agree? | compare |
+
+**Which index leaves.** With `k = 2` and `right = 4`, the window must hold 2 characters, so it covers indices 3 and 4. The character that just dropped out sits at index 2, which is `4 − 2`. In general the leaving index is **`right − k`**, and the window starts at **`right − k + 1`**.
+
+Hand trace: `need` = a:1, b:1, with `k = 2`
+
+| right | Enters | Leaves | Window | `win` | Agree? |
+|---|---|---|---|---|---|
+| first build | e, i | — | `ei` | e:1, i:1 | no |
+| 2 | d | e | `id` | i:1, d:1 | no |
+| 3 | b | i | `db` | d:1, b:1 | no |
+| 4 | a | d | `ba` | b:1, a:1 | **yes** |
+
+Each row touches only two counts.
+
+### 4. The match counter
+
+Comparing all 26 slots after every slide repeats work: only two slots moved, so 24 of the comparisons are known in advance. A **match counter** keeps one number instead:
+
+```
+matches = number of the 26 letters where win[c] === need[c]
+matches === 26   ⟺   window is a rearrangement of the pattern
+```
+
+A slot changes by exactly 1 per update, so its agreement can flip, but never stays "agreeing" (equal values cannot stay equal after a ±1 change):
+
+| Before | After | Change to `matches` |
+|---|---|---|
+| agreeing | not agreeing | −1 |
+| not agreeing | agreeing | +1 |
+| not agreeing | not agreeing | 0 |
+
+One before-and-after rule covers all three rows:
+
+```js
+const update = (c, delta) => {
+  if (win[c] === need[c]) matches--; // agreed before: uncount it
+  win[c] += delta;
+  if (win[c] === need[c]) matches++; // agrees now: count it
+};
+```
+
+Hand trace on the same input. After the first window `ei`, four slots disagree (a, b, e, i), so `matches = 26 − 4 = 22`.
+
+| right | Update | Slot before → after | Δ | matches |
+|---|---|---|---|---|
+| 2 | add `d` | d: 0 = 0 → 1 ≠ 0 | −1 | 21 |
+| | remove `e` | e: 1 ≠ 0 → 0 = 0 | +1 | 22 |
+| 3 | add `b` | b: 0 ≠ 1 → 1 = 1 | +1 | 23 |
+| | remove `i` | i: 1 ≠ 0 → 0 = 0 | +1 | 24 |
+| 4 | add `a` | a: 0 ≠ 1 → 1 = 1 | +1 | 25 |
+| | remove `d` | d: 1 ≠ 0 → 0 = 0 | +1 | **26** |
+
+At `right = 2`, adding `d` lowered the count. A letter absent from the pattern has `need = 0`, so its slot agrees only while the window holds none of it.
+
+## The invariant
+
+After the step for `right`, `win` holds the counts of exactly `text[right − k + 1 .. right]`, and `matches` equals the number of letters on which `win` and `need` agree. So `matches === 26` is true exactly when the current window is a rearrangement of the pattern.
+
+## Implementation
+
+```js
+// Start index of every window in `text` that is a rearrangement of `pattern`.
+// Lowercase English letters only.
+function rearrangementStarts(text, pattern) {
+  const k = pattern.length;
+  const starts = [];
+  if (k > text.length) return starts; // no window of length k fits
+
+  const slot = (str, i) => str.charCodeAt(i) - 97; // 'a' → 0 … 'z' → 25
+  const need = new Array(26).fill(0); // counts in the pattern
+  const win = new Array(26).fill(0);  // counts in the current window
+
+  // First window: text[0 .. k-1]
+  for (let i = 0; i < k; i++) {
+    need[slot(pattern, i)]++;
+    win[slot(text, i)]++;
+  }
+
+  // Count agreeing slots once, at the start
+  let matches = 0;
+  for (let c = 0; c < 26; c++) if (win[c] === need[c]) matches++;
+  if (matches === 26) starts.push(0);
+
+  // Change one slot by ±1 and keep `matches` correct
+  const update = (c, delta) => {
+    if (win[c] === need[c]) matches--;
+    win[c] += delta;
+    if (win[c] === need[c]) matches++;
+  };
+
+  for (let right = k; right < text.length; right++) {
+    update(slot(text, right), +1);     // enters on the right
+    update(slot(text, right - k), -1); // leaves on the left
+    // Invariant: win = counts of text[right-k+1 .. right]
+    //            matches = letters where win[c] === need[c]
+    if (matches === 26) starts.push(right - k + 1);
+  }
+  return starts;
+}
+
+rearrangementStarts("cbaebabacd", "abc"); // [0, 6]  → "cba", "bac"
+```
+
+## Complexity
+
+`n` is the text length and `k` the pattern length.
+
+| Version | Time | Space | Why |
+|---|---|---|---|
+| Rebuild counts per window | O((n − k + 1) · k) | O(1) | every window recounts all k characters |
+| Slide, compare all 26 slots | O(26 · n) = O(n) | O(1) | 2 updates + 26 comparisons per slide |
+| Slide, match counter | O(n) | O(1) | 2 updates (each at most 2 comparisons) + 1 check per slide |
+
+Space is O(1) because the two arrays hold 26 slots whatever the input size.
+
+## Edge cases
+
+| Case | What breaks | How the code handles it |
+|---|---|---|
+| Pattern longer than text | the first loop reads past the end; `charCodeAt` returns `NaN` | guard returns an empty result |
+| Repeated letters (`"aab"`) | a presence-only check (a set) treats `"ab"` as a match | counts, not presence, are compared |
+| Window as long as the text | only one window exists | the first build checks it; the slide loop runs zero times |
+| Letter not in the pattern enters | its slot stops agreeing | `update` lowers `matches` (the `d` row above) |
+
+## Trade-offs
+
+| Choice | Buys | Costs |
+|---|---|---|
+| Compare all 26 slots per slide | simplest code | 26 comparisons per slide |
+| Match counter | 1 check per slide | an extra variable that every update must maintain |
+| Array of 26 | fastest lookup, fixed size | lowercase English letters only |
+| `Map` keyed by character | any character, including non-English text | hashing on every update |
+
+## When to use / avoid
+
+**Use when the condition says:**
+- "anagram", "permutation", "rearrangement" of a pattern inside a longer string
+- the answer depends on letter counts, never on letter order
+
+**Avoid when:**
+- order matters (exact substring search): equal counts do not mean equal strings
+- the window is not a run of consecutive characters
+
+## Practice
+
+<Problems />
+
+<Solution problem="567. Permutation in String">
+
+**Approach.** Build `need` from `s1` and `win` from the first `s1.length` characters of `s2`. Slide one step at a time, maintaining the match counter, and return `true` the moment it reaches 26.
+
+**Invariant.** After each slide, `win` holds the counts of the last `k` characters of `s2` read so far, and `matches` counts the letters on which `win` and `need` agree.
+
+```js
+var checkInclusion = function (s1, s2) {
+  const k = s1.length;
+  if (k > s2.length) return false;
+
+  const slot = (str, i) => str.charCodeAt(i) - 97;
+  const need = new Array(26).fill(0);
+  const win = new Array(26).fill(0);
+
+  for (let i = 0; i < k; i++) {
+    need[slot(s1, i)]++;
+    win[slot(s2, i)]++;
+  }
+
+  let matches = 0;
+  for (let c = 0; c < 26; c++) if (win[c] === need[c]) matches++;
+  if (matches === 26) return true;
+
+  const update = (c, delta) => {
+    if (win[c] === need[c]) matches--;
+    win[c] += delta;
+    if (win[c] === need[c]) matches++;
+  };
+
+  for (let right = k; right < s2.length; right++) {
+    update(slot(s2, right), +1);     // enters
+    update(slot(s2, right - k), -1); // leaves
+    if (matches === 26) return true; // first rearrangement found
+  }
+  return false;
+};
+```
+
+Hand trace: `s1 = "ab"`, `s2 = "eidboaoo"` (answer `false`). First window `ei` disagrees on a, b, e, i, so `matches = 22`.
+
+| right | Add | Remove | Window | matches |
+|---|---|---|---|---|
+| 2 | d (−1) | e (+1) | `id` | 22 |
+| 3 | b (+1) | i (+1) | `db` | 24 |
+| 4 | o (−1) | d (+1) | `bo` | 24 |
+| 5 | a (+1) | b (−1) | `oa` | 24 |
+| 6 | o (0) | o (0) | `ao` | 24 |
+| 7 | o (0) | a (−1) | `oo` | 23 |
+
+The counter never reaches 26, so the result is `false`. At `right = 6` both updates leave `o` disagreeing (2 then 1 against a need of 0), which is the "not agreeing → not agreeing" row.
+
+**Cost.** O(n) time for `n = s2.length`; O(1) space for two 26-slot arrays.
+
+</Solution>
+
+<Solution problem="438. Find All Anagrams in a String">
+
+**Approach.** The same fixed window of length `p.length`, but a match records the window's start, `right − k + 1`, and the loop runs to the end. This version uses the plain 26-slot comparison; the match counter from the Implementation is a drop-in replacement.
+
+**Invariant.** After each slide, `win` holds the counts of `s[right − k + 1 .. right]`, and `starts` holds every earlier start whose window agreed with `need`.
+
+```js
+var findAnagrams = function (s, p) {
+  const k = p.length;
+  const starts = [];
+  if (k > s.length) return starts;
+
+  const slot = (str, i) => str.charCodeAt(i) - 97;
+  const sameCounts = (a, b) => a.every((v, i) => v === b[i]);
+  const need = new Array(26).fill(0);
+  const win = new Array(26).fill(0);
+
+  for (let i = 0; i < k; i++) {
+    need[slot(p, i)]++;
+    win[slot(s, i)]++;
+  }
+  if (sameCounts(need, win)) starts.push(0);
+
+  for (let right = k; right < s.length; right++) {
+    win[slot(s, right)]++;     // enters
+    win[slot(s, right - k)]--; // leaves
+    if (sameCounts(need, win)) starts.push(right - k + 1); // window start
+  }
+  return starts;
+};
+```
+
+Hand trace: `s = "abab"`, `p = "ab"`, so `need` = a:1, b:1.
+
+| right | Enters | Leaves | Window (indices) | `win` | Push |
+|---|---|---|---|---|---|
+| first build | a, b | — | `ab` (0–1) | a:1, b:1 | 0 |
+| 2 | a | a | `ba` (1–2) | b:1, a:1 | 1 |
+| 3 | b | b | `ab` (2–3) | a:1, b:1 | 2 |
+
+Result: `[0, 1, 2]`. The windows overlap, and each one is recorded separately.
+
+**Cost.** O(26 · n) = O(n) time; O(1) space beyond the output.
+
+</Solution>
+
+## TL;DR
+
+- A frequency map turns "same letters, same quantities" into a direct comparison: two strings are rearrangements exactly when their count maps match.
+- Sliding the window never rebuilds the map: one character enters (`++`), the one at `right − k` leaves (`--`).
+- A match counter tracks how many letters agree, so each slide checks one number instead of 26 slots.
+- Update the counter before and after each change: uncount the slot if it agreed, change it, count it again if it agrees now.

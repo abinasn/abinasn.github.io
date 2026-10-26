@@ -1,0 +1,164 @@
+---
+title: "Big-O Notation"
+slug: "big-o-notation"
+series: "dsa"
+order: 2
+date: "2026-08-27"
+draft: false
+summary: "Big-O notation names how many steps an algorithm takes as its input grows, keeping only the part of that growth that matters once the input is large."
+tags: ["dsa", "fundamentals", "big-o", "asymptotic-notation"]
+---
+
+## Definition
+
+**Big-O notation** describes how the number of steps an algorithm takes grows as its input grows, keeping only the part of that growth that dominates once the input is large. It answers one question: if the input doubles, does the work stay the same, grow by a fixed amount, or double too?
+
+## How it works
+
+### One question, a growing input
+
+Take an array of numbers and ask whether a target value is in it. Three ways to arrange the numbers, watched as the array grows.
+
+| Arrangement | n = 8 | n = 16 | n = 32 | n = 1,000,000 |
+| --- | --- | --- | --- | --- |
+| Unsorted array (checks) | 8 | 16 | 32 | 1,000,000 |
+| Sorted array (halvings to reach 1) | 3 | 4 | 5 | 20 |
+| Hash set (checks) | 1 | 1 | 1 | 1 |
+
+Each row grows differently. The unsorted row doubles every time n doubles. The sorted row goes up by one each time n doubles, because each halving removes half of whatever remained. The hash row never moves.
+
+### Naming the shapes
+
+| Pattern as n doubles | Name | Read as |
+| --- | --- | --- |
+| Work doubles | **O(n)** | linear |
+| Work goes up by one step | **O(log n)** | logarithmic |
+| Work stays the same | **O(1)** | constant |
+
+`n` stands for the number of items. These three labels are names for the three rows above — nothing more.
+
+### Dropping constants
+
+Compare two algorithms by exact step count. One costs `100n` steps, the other costs `n²`.
+
+| n | 100n | n² | Smaller |
+| --- | --- | --- | --- |
+| 10 | 1,000 | 100 | n² |
+| 100 | 10,000 | 10,000 | tie |
+| 1,000 | 100,000 | 1,000,000 | 100n |
+| 10,000 | 1,000,000 | 100,000,000 | 100n, by 100× |
+
+Below n = 100 the `n²` algorithm does less work. Above it, `100n` does less, and the gap keeps widening from there.
+
+The `100` decided **where** the two crossed. It did not decide which one wins after the crossing. Raise the constant to 10,000 and the crossing simply moves out to n = 10,000 — `100n` still wins beyond it, and still wins by more as n grows.
+
+A constant delays the outcome. It never changes it. That is why Big-O drops it: `100n` is written **O(n)**, not O(100n).
+
+### Dropping the smaller term
+
+Now a cost made of two parts added together: `n² + n`.
+
+| n | n² | n | Total | n's share of total |
+| --- | --- | --- | --- | --- |
+| 8 | 64 | 8 | 72 | 11% |
+| 100 | 10,000 | 100 | 10,100 | 1% |
+| 1,000 | 1,000,000 | 1,000 | 1,001,000 | 0.1% |
+
+The `n` term keeps growing in absolute terms — 8, then 100, then 1,000. Its share of the total shrinks anyway, because `n²` grows faster than it does.
+
+The smaller term is not discarded because it vanishes. It is discarded because it loses the race, and keeps losing by more as n grows. So `n² + n` is written **O(n²)**.
+
+### Upper bound, lower bound, tight bound
+
+Big-O is one of three related notations, each making a different kind of claim.
+
+| Notation | Claims | Meaning |
+| --- | --- | --- |
+| **O(g(n))** | cost never grows faster than g(n) | an upper bound |
+| **Ω(g(n))** | cost never grows slower than g(n) | a lower bound |
+| **Θ(g(n))** | both at once | an exact growth rate |
+
+O is used almost everywhere, because knowing a cost will not exceed a certain rate is usually enough. Ω and Θ appear when the lower bound also needs stating, or when a cost is pinned down exactly.
+
+## The invariant
+
+**Multiplying a cost by a constant, or adding a slower-growing term to it, never changes its Big-O.** It only changes how large the input has to get before the pattern becomes visible.
+
+## Implementation
+
+One function per shape. Each does one job.
+
+```js
+// O(1) - the work does not depend on how many values there are.
+function firstValue(values) {
+  return values[0]; // one operation, whether the array holds 8 items or 8 million
+}
+```
+
+```js
+// O(n) - one operation per value, so the work grows in step with the array.
+function sumValues(values) {
+  let total = 0;
+
+  for (let i = 0; i < values.length; i++) {
+    total += values[i]; // runs n times
+  }
+
+  return total;
+}
+```
+
+```js
+// O(n^2) - every value is paired against every later value.
+function hasPairSummingTo(values, target) {
+  for (let i = 0; i < values.length; i++) {        // outer loop: n times
+    for (let j = i + 1; j < values.length; j++) {  // inner loop: up to n times per i
+      if (values[i] + values[j] === target) return true;
+    }
+  }
+
+  return false;
+}
+```
+
+The nested loop does not run `n × n` times. Because `j` starts at `i + 1`, each value is only paired with the values after it, so the inner loop gets one shorter each time `i` advances.
+
+Counted by hand for a four-element array:
+
+| i | Compared against | Comparisons |
+| --- | --- | --- |
+| 0 | the 3 values after it | 3 |
+| 1 | the 2 values after it | 2 |
+| 2 | the 1 value after it | 1 |
+| 3 | nothing left | 0 |
+
+Six comparisons, not sixteen. Watch that count against `n × n` as the array grows.
+
+| n | Comparisons | n × n | Ratio |
+| --- | --- | --- | --- |
+| 4 | 6 | 16 | 0.38 |
+| 8 | 28 | 64 | 0.44 |
+| 100 | 4,950 | 10,000 | 0.49 |
+| 1,000 | 499,500 | 1,000,000 | 0.50 |
+
+The count settles at roughly half of `n × n`. Half is a constant multiplier, and constants are dropped for the reason shown earlier — they change the count, not the rate it grows at.
+
+So this loop is **O(n²)**, even though it never performs `n²` comparisons.
+
+## Key terms
+
+| Term | Plain-English meaning |
+| --- | --- |
+| Big-O notation | A way of naming how a cost grows as input grows, keeping only the fastest-growing part |
+| Dominant term | The part of a cost expression that grows fastest — the only part Big-O keeps |
+| Upper bound (O) | A guarantee that cost never exceeds a certain growth rate |
+| Lower bound (Ω) | A guarantee that cost never grows slower than a certain rate |
+| Tight bound (Θ) | A bound that holds as both an upper and a lower bound at once |
+
+## TL;DR
+
+- **Big-O** names how the number of steps grows as the input grows — not the exact count.
+- If n doubles: O(n) work doubles, O(log n) work goes up by one step, O(1) work is unchanged.
+- Constants stretch every input size equally, so they are dropped: `100n` is O(n).
+- When costs are added, the fastest-growing part takes over and the rest is dropped: `n² + n` is O(n²).
+- **O** is an upper bound, **Ω** is a lower bound, **Θ** is both at once.

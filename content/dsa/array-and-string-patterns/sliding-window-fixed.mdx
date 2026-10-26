@@ -1,0 +1,282 @@
+---
+title: "Fixed-Size Sliding Window"
+slug: "sliding-window-fixed"
+series: "dsa"
+order: 12
+date: "2026-09-30"
+draft: false
+problems:
+  - name: "643. Maximum Average Subarray I"
+    difficulty: "Easy"
+    idea: "Slide a window sum; divide the best sum by k once at the end."
+    url: "https://leetcode.com/problems/maximum-average-subarray-i/"
+  - name: "1456. Maximum Number of Vowels in a Substring of Given Length"
+    difficulty: "Medium"
+    idea: "Slide a vowel count: +1 if the entering char is a vowel, -1 if the leaving one is."
+    url: "https://leetcode.com/problems/maximum-number-of-vowels-in-a-substring-of-given-length/"
+summary: "How to check every run of k neighbouring values in one pass by updating the last answer instead of starting over."
+tags: ["dsa", "sliding-window", "arrays", "patterns"]
+---
+
+## Definition
+
+A **fixed-size sliding window** is a way to examine every run of exactly `k` consecutive elements in an array, where each run's answer is built from the previous run's answer instead of from scratch.
+
+The run is the **window**; `k` is the **window size**. Consecutive means neighbouring positions with no gaps: `[1, 5, 1]` is a window of `[2, 1, 5, 1, 3, 2]`, but `[2, 5, 3]` is not.
+
+## The problem it solves
+
+Task used throughout: the largest sum of any `k` consecutive values.
+
+```
+nums = [2, 1, 5, 1, 3, 2],  k = 3
+```
+
+The direct approach sums each window from scratch:
+
+| Window | Indices | Values read | Sum |
+|---|---|---|---|
+| 1 | 0–2 | 2, 1, 5 | 8 |
+| 2 | 1–3 | 1, 5, 1 | 7 |
+| 3 | 2–4 | 5, 1, 3 | 9 |
+| 4 | 3–5 | 1, 3, 2 | 6 |
+
+4 windows × 3 reads = **12 reads** for only 6 values. Neighbouring windows share `k − 1` values, and each shared value is added again.
+
+```js
+// Brute force: re-sum every window from scratch
+function maxWindowSumBrute(nums, k) {
+  let best = -Infinity;
+  // <=, not <: the last window starts at index n - k
+  for (let start = 0; start <= nums.length - k; start++) {
+    let sum = 0;
+    for (let j = start; j < start + k; j++) sum += nums[j]; // k reads
+    best = Math.max(best, sum);
+  }
+  return best;
+}
+```
+
+## How it works
+
+### Counting the windows
+
+Picture the window as a box, `k` values wide, moving one step at a time.
+
+```
+Index:        0   1   2   3   4   5
+Position 1:  [2   1   5]  1   3   2
+Position 2:   2  [1   5   1]  3   2
+Position 3:   2   1  [5   1   3]  2
+Position 4:   2   1   5  [1   3   2]
+Position 5:   2   1   5   1  [3   2   ?]   ✗ runs past the end
+```
+
+- The first box uses `k` values.
+- Each value left over pulls the box one step, so there are `n − k` slides.
+- Windows = 1 + (n − k) = **n − k + 1**. Here: 1 + 3 = 4.
+
+### Add right, remove left
+
+Neighbouring windows differ by exactly two values:
+
+```
+Window 1:  [2, 1, 5]          sum 8
+Window 2:     [1, 5, 1]
+            ↑        ↑
+          leaves   enters
+```
+
+New sum = old sum + entering − leaving = 8 + 1 − 2 = **7**.
+
+When index `r` enters, index `r − k` leaves. The box is `k` wide, so the value that falls out is always `k` positions behind the one coming in.
+
+### Hand trace
+
+| Step | r | Enters `nums[r]` | Leaves `nums[r − k]` | Sum | Best |
+|---|---|---|---|---|---|
+| Build | — | 2, 1, 5 | — | 8 | 8 |
+| Slide 1 | 3 | 1 | nums[0] = 2 | 8 + 1 − 2 = 7 | 8 |
+| Slide 2 | 4 | 3 | nums[1] = 1 | 7 + 3 − 1 = 9 | 9 |
+| Slide 3 | 5 | 2 | nums[2] = 5 | 9 + 2 − 5 = 6 | 9 |
+
+The sums 8, 7, 9, 6 match the brute-force table. They took 3 + 2 + 2 + 2 = **9 reads** instead of 12.
+
+## The invariant
+
+An **invariant** is a statement that stays true at every step of a loop.
+
+> After index `r` is processed, `sum` equals the sum of exactly the last `k` values, `nums[r − k + 1 .. r]`.
+
+- Before any slide, `sum` holds `nums[0 .. k − 1]`: true for `r = k − 1`.
+- Each slide adds `nums[r]`, the new right edge, and subtracts `nums[r − k]`, which sits just outside the new left edge. The window still holds exactly `k` values.
+
+## Implementation
+
+```js
+// Largest sum of any k consecutive values.
+function maxWindowSum(nums, k) {
+  if (k < 1 || k > nums.length) {
+    throw new RangeError("k must be between 1 and nums.length");
+  }
+
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += nums[i]; // first window: k reads
+
+  let best = sum; // seed with a real window, not 0: values may be negative
+  for (let r = k; r < nums.length; r++) {
+    sum += nums[r] - nums[r - k]; // add right, remove left
+    // invariant: sum === nums[r-k+1] + ... + nums[r]
+    best = Math.max(best, sum);
+  }
+  return best;
+}
+
+maxWindowSum([2, 1, 5, 1, 3, 2], 3); // 9
+```
+
+For the largest **average**, return `best / k`. Because `k` never changes, the window with the largest sum also has the largest average, so one division at the end is enough.
+
+## Complexity
+
+Count the reads per value, not per window:
+
+- Every value **enters** the window exactly once: `n` reads.
+- Every value except the last `k` **leaves** once: `n − k` reads.
+- Total: `n + (n − k)`.
+
+| n | k | Brute force: (n − k + 1) × k | Sliding: n + (n − k) |
+|---|---|---|---|
+| 6 | 3 | 12 | 9 |
+| 10 | 5 | 30 | 15 |
+| 1,000 | 500 | 250,500 | 1,500 |
+
+The sliding total never exceeds `2n`, whatever `k` is. The brute-force total pays `k` reads for every window, so it grows with both `n` and `k`.
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Brute force | O(n · k) | O(1) | `k` reads for each of `n − k + 1` windows |
+| Sliding window | O(n) | O(1) | each value read at most twice; only `sum` and `best` stored |
+
+O(n) means the work grows in step with the array length. It is not O(n − k): the `n` reads for entering never shrink. At `k = n` there are zero slides, yet building the one window still reads all `n` values.
+
+## Edge cases
+
+| Case | What breaks | How the code handles it |
+|---|---|---|
+| `k === nums.length` | Only one window exists | Slide loop runs zero times; returns the first window's sum |
+| `k === 1` | Every element is its own window | Each slide adds one value and removes the one before: returns the largest element |
+| All values negative, e.g. `[-4, -2, -7]`, `k = 2` | Seeding `best = 0` returns 0, a sum no window has | `best` starts at the first window's sum, −6; answer −6 (windows: −6, −9) |
+| `k > nums.length` or `k < 1` | No window exists; the first loop would read `undefined` and produce `NaN` | Guard throws before any read |
+
+## Variants: what the window holds
+
+The box moves the same way whatever it tracks. Only the enter and leave updates change.
+
+| Window state | On enter `x` | On leave `x` | Example question |
+|---|---|---|---|
+| Sum | `sum += x` | `sum -= x` | largest total of any `k` readings |
+| Average | same as sum | same as sum | largest `k`-period average; divide by `k` once at the end |
+| Count of matches | `if (test(x)) count++` | `if (test(x)) count--` | most values passing a test in any run of `k` |
+
+Every row works because the leave step exactly undoes the enter step.
+
+## When to use / avoid
+
+**Use when**
+- The length is fixed in the question: "every `k` consecutive", "any subarray of length `k`", "the last `k` readings".
+- A window's answer can be updated by adding one value and removing one value.
+- Computing a moving average over the last `k` samples, as monitoring dashboards do for request rates.
+
+**Avoid when**
+- The window length is not fixed: it grows or shrinks depending on a condition.
+- The elements need not be neighbours ("any `k` elements"). That is selection, not a window.
+- The leave step cannot be undone. For the maximum of each window, removing the old maximum does not reveal the new one without rescanning.
+
+## Practice
+
+<Problems />
+
+<Solution problem="643. Maximum Average Subarray I">
+
+**Approach.** Slide a window sum exactly as above. The divisor `k` never changes, so the window with the largest sum has the largest average; divide once at the end.
+
+**Invariant.** After index `r`, `sum` holds `nums[r − k + 1 .. r]` and `best` holds the largest window sum seen so far.
+
+```js
+function findMaxAverage(nums, k) {
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += nums[i]; // first window
+
+  let best = sum;
+  for (let r = k; r < nums.length; r++) {
+    sum += nums[r] - nums[r - k]; // add right, remove left
+    best = Math.max(best, sum);
+  }
+  return best / k; // one division, not one per window
+}
+```
+
+`nums = [1, 12, -5, -6, 50, 3]`, `k = 4`:
+
+| Step | Enters | Leaves | Sum | Best |
+|---|---|---|---|---|
+| Build | 1, 12, −5, −6 | — | 2 | 2 |
+| r = 4 | 50 | nums[0] = 1 | 51 | 51 |
+| r = 5 | 3 | nums[1] = 12 | 42 | 51 |
+
+Result: 51 / 4 = **12.75**.
+
+**Cost.** O(n) time, O(1) space.
+
+</Solution>
+
+<Solution problem="1456. Maximum Number of Vowels in a Substring of Given Length">
+
+**Approach.** The window holds a **count** of vowels instead of a sum. A character entering adds 1 only if it is a vowel; a character leaving subtracts 1 only if it is a vowel.
+
+**Invariant.** After index `r`, `count` equals the number of vowels in `s[r − k + 1 .. r]`.
+
+```js
+function maxVowels(s, k) {
+  const set = new Set(['a','e','i','o','u']);
+  let count = 0, max=0;
+  for(let i=0;i<k;i++){
+      if(set.has(s[i])) count++;
+  }
+  max = count;
+  for(let i=k;i<s.length;i++){
+    if(set.has(s[i-k])) count--;
+    if(set.has(s[i])) count++; 
+      max = Math.max(max, count);
+  }
+  return max;
+};
+```
+
+`s = "abciiidef"`, `k = 3`:
+
+| Step | Window | Enters | Leaves | Count | Best |
+|---|---|---|---|---|---|
+| Build | `abc` | a, b, c | — | 1 | 1 |
+| r = 3 | `bci` | i (+1) | a (−1) | 1 | 1 |
+| r = 4 | `cii` | i (+1) | b (0) | 2 | 2 |
+| r = 5 | `iii` | i (+1) | c (0) | 3 | 3 |
+| r = 6 | `iid` | d (0) | i (−1) | 2 | 3 |
+| r = 7 | `ide` | e (+1) | i (−1) | 2 | 3 |
+| r = 8 | `def` | f (0) | i (−1) | 1 | 3 |
+
+Result: **3**.
+
+**Cost.** O(n) time; the vowel check scans a fixed 5-letter string, so it is constant. O(1) space.
+
+</Solution>
+
+## TL;DR
+
+- A fixed-size window is a run of exactly `k` consecutive elements; an array of length `n` has `n − k + 1` of them.
+- Neighbouring windows share `k − 1` values, so re-summing each one costs O(n · k).
+- Slide instead: `sum += nums[r] - nums[r - k]`. One value enters, one leaves.
+- Invariant: after index `r`, `sum` covers exactly `nums[r − k + 1 .. r]`.
+- Each value enters once and leaves at most once: O(n) time, O(1) space.
+- The pattern needs a leave step that undoes the enter step: sums, averages, counts.

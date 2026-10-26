@@ -1,0 +1,337 @@
+---
+title: "Variable-Size Sliding Window"
+slug: "sliding-window-variable"
+series: "dsa"
+order: 13
+date: "2026-10-07"
+draft: false
+problems:
+  - name: "209. Minimum Size Subarray Sum"
+    difficulty: "Medium"
+    idea: "Minimise: expand until the sum reaches the target, then shrink while it still does."
+    url: "https://leetcode.com/problems/minimum-size-subarray-sum/"
+  - name: "3. Longest Substring Without Repeating Characters"
+    difficulty: "Medium"
+    idea: "Maximise: expand freely, shrink only until the entering character is no longer a repeat."
+    url: "https://leetcode.com/problems/longest-substring-without-repeating-characters/"
+  - name: "424. Longest Repeating Character Replacement"
+    difficulty: "Medium"
+    idea: "Maximise: a window is valid when its length minus its most common letter's count is at most k."
+    url: "https://leetcode.com/problems/longest-repeating-character-replacement/"
+summary: "How to find the shortest or longest run of neighbouring values that meets a condition, in one pass, by growing and shrinking a window."
+tags: ["dsa", "sliding-window", "arrays", "strings", "patterns"]
+---
+
+## Definition
+
+A **variable-size sliding window** is a run of consecutive elements whose two edges move independently: the right edge grows it, the left edge shrinks it. It finds the **shortest** or **longest** run that meets a condition, when the question gives a condition instead of a length.
+
+A run that meets the condition is called **valid**. "Sum is at least 7" and "no letter appears twice" are typical conditions.
+
+## The problem it solves
+
+Task: the **shortest** run of consecutive values with sum **at least 7**.
+
+```
+Values:   2   3   1   2   4   3
+Index:    0   1   2   3   4   5
+```
+
+The direct approach tries every start and adds values to the right until the sum reaches 7:
+
+| Start | Running sum | First valid run | Length |
+|---|---|---|---|
+| 0 | 2 → 5 → 6 → **8** | 2, 3, 1, 2 | 4 |
+| 1 | 3 → 4 → 6 → **10** | 3, 1, 2, 4 | 4 |
+| 2 | 1 → 3 → **7** | 1, 2, 4 | 3 |
+| 3 | 2 → 6 → **9** | 2, 4, 3 | 3 |
+| 4 | 4 → **7** | 4, 3 | **2** |
+| 5 | 3 → end | none | — |
+
+Start 1 re-adds `3, 1, 2`, which start 0 had already summed. In the worst case every start runs to the end: 6 + 5 + 4 + 3 + 2 + 1 = 21 additions for 6 values, a cost that grows with the square of `n`.
+
+## How it works
+
+### Two edges, moving separately
+
+```
+   L           R
+  [2   3   1   2]  4   3      sum 8
+```
+
+| Move | Effect | Sum (positive values) |
+|---|---|---|
+| R steps right | one value added | goes up |
+| L steps right | oldest value removed | goes down |
+
+R advances one step per iteration. L advances only when the condition says so. Both edges only ever move right.
+
+### Minimise: shrink while valid
+
+Wanting the box small, the loop expands until the box is valid, then shrinks from the left for as long as it stays valid, recording each valid length.
+
+Trace, target 7:
+
+| R adds | Sum | Valid? | Action | Box after | Shortest |
+|---|---|---|---|---|---|
+| 2 | 2 | ✗ | expand | 2 | — |
+| 3 | 5 | ✗ | expand | 2 3 | — |
+| 1 | 6 | ✗ | expand | 2 3 1 | — |
+| 2 | 8 | ✓ | record 4; remove 2 → 6 ✗ | 3 1 2 | 4 |
+| 4 | 10 | ✓ | record 4; remove 3 → 7 ✓ | 1 2 4 | 4 |
+| | 7 | ✓ | record 3; remove 1 → 6 ✗ | 2 4 | 3 |
+| 3 | 9 | ✓ | record 3; remove 2 → 7 ✓ | 4 3 | 3 |
+| | 7 | ✓ | record **2**; remove 4 → 3 ✗ | 3 | **2** |
+
+Answer **2**, matching the brute-force table.
+
+L never needs to step back. Once a valid box starting at L is recorded, every later box starting at that L ends further right, so it is longer and cannot beat it.
+
+### Maximise: shrink while invalid
+
+Task: the **longest** run with sum **at most 7**, same values. Wanting the box big, the loop expands freely and shrinks only when forced, just until the box is valid again.
+
+| R adds | Sum | Valid? | Action | Box after | Longest |
+|---|---|---|---|---|---|
+| 2 | 2 | ✓ | record 1 | 2 | 1 |
+| 3 | 5 | ✓ | record 2 | 2 3 | 2 |
+| 1 | 6 | ✓ | record 3 | 2 3 1 | 3 |
+| 2 | 8 | ✗ | remove 2 → 6 ✓; record 3 | 3 1 2 | 3 |
+| 4 | 10 | ✗ | remove 3 → 7 ✓; record 3 | 1 2 4 | 3 |
+| 3 | 10 | ✗ | remove 1 → 9 ✗, remove 2 → 7 ✓; record 2 | 4 3 | 3 |
+
+Answer **3**. Every run of 4 sums to 8 or 10.
+
+### Side by side
+
+| | Minimise (shortest) | Maximise (longest) |
+|---|---|---|
+| Shrink | while **valid** | while **invalid** |
+| Why shrink | to try a shorter valid box | forced, to restore validity |
+| Record | **inside** the shrink loop | **after** the shrink loop |
+| Start `best` at | `Infinity` | `0` |
+
+Record wherever the box is guaranteed valid.
+
+## The invariant
+
+Two layers hold at every step:
+
+1. **Bookkeeping (both types):** `sum` equals the total of exactly `nums[L..R]`. Every add happens with an R step and every remove with an L step.
+2. **Validity (depends on type):**
+   - Minimise: inside the shrink loop, `nums[L..R]` is valid.
+   - Maximise: after the shrink loop, `nums[L..R]` is valid.
+
+## Implementation
+
+The box `nums[L..R]` includes both ends, so its length is `R − L + 1`. For the box `[4, 3]` at indices 4 and 5: 5 − 4 + 1 = 2 values.
+
+```js
+// Shortest run with sum >= target. Returns 0 if none exists.
+function shortestAtLeast(nums, target) {
+  let L = 0, sum = 0, best = Infinity;
+  for (let R = 0; R < nums.length; R++) {
+    sum += nums[R];                      // expand
+    while (sum >= target) {              // shrink while VALID
+      best = Math.min(best, R - L + 1);  // valid here: record inside
+      sum -= nums[L];
+      L++;
+    }
+    // invariant: sum === nums[L] + ... + nums[R]
+  }
+  return best === Infinity ? 0 : best;
+}
+
+// Longest run with sum <= limit.
+function longestAtMost(nums, limit) {
+  let L = 0, sum = 0, best = 0;
+  for (let R = 0; R < nums.length; R++) {
+    sum += nums[R];                      // expand
+    while (sum > limit) {                // shrink while INVALID
+      sum -= nums[L];
+      L++;
+    }
+    best = Math.max(best, R - L + 1);    // valid again: record after
+  }
+  return best;
+}
+
+shortestAtLeast([2, 3, 1, 2, 4, 3], 7); // 2
+longestAtMost([2, 3, 1, 2, 4, 3], 7);   // 3
+```
+
+Only the `while` condition, the position of the record line, and the starting `best` differ.
+
+## Complexity
+
+The nested `while` suggests O(n²). Counting actual moves on the minimise trace says otherwise:
+
+| R adds | L removes | R moves | L moves |
+|---|---|---|---|
+| 2 | — | 1 | 0 |
+| 3 | — | 1 | 0 |
+| 1 | — | 1 | 0 |
+| 2 | 2 | 1 | 1 |
+| 4 | 3, 1 | 1 | 2 |
+| 3 | 2, 4 | 1 | 2 |
+| **Total** | | **6** | **5** |
+
+- R moves right once per value: at most `n` moves.
+- L only moves right and never passes R: at most `n` moves **over the whole run**, not per R.
+- Total at most `2n`.
+
+| Approach | Time | Space | Why |
+|---|---|---|---|
+| Try every start | O(n²) | O(1) | up to n + (n − 1) + … + 1 additions |
+| Variable window | O(n) | O(1) | each value added once, removed at most once |
+
+## Edge cases
+
+| Case | What breaks | How the code handles it |
+|---|---|---|
+| No valid run, e.g. `[1, 1, 1]`, target 7 | `best` stays `Infinity` | returns `0` |
+| One value alone meets the target, e.g. `[1, 4, 4]`, target 4 | none | shrink loop reduces the box to length 1 |
+| One value alone breaks the limit, e.g. `[9]`, limit 7 | box must be empty | L passes R, length `R − L + 1 = 0`, so `best` stays 0 |
+| Negative values, e.g. `[5, -4, 3]`, limit 4 | removing a value can raise the sum, so shrinking can discard a box that would become valid | not handled: `longestAtMost` returns 2, true answer 3 (5 − 4 + 3 = 4) |
+
+## When to use / avoid
+
+**Use when**
+- The question asks for the **shortest** or **longest** contiguous run, substring or subarray meeting a condition.
+- Adding a value moves the box one way and removing it moves it back (positive sums, counts of letters, sets of characters).
+- Growing a valid box can only break the condition in one direction, so shrinking is the only fix.
+
+**Avoid when**
+- The length is given: that is a fixed-size window.
+- Values can be negative and the condition is on the sum.
+- The elements need not be neighbours.
+
+## Practice
+
+<Problems />
+
+<Solution problem="209. Minimum Size Subarray Sum">
+
+**Approach.** Minimise template with sum ≥ target as the valid test. All values are positive, so adding raises the sum and removing lowers it.
+
+**Invariant.** Inside the shrink loop, `nums[L..R]` sums to at least `target`.
+
+```js
+function minSubArrayLen(target, nums) {
+  let L = 0, sum = 0, best = Infinity;
+  for (let R = 0; R < nums.length; R++) {
+    sum += nums[R];
+    while (sum >= target) {
+      best = Math.min(best, R - L + 1); // valid: record
+      sum -= nums[L++];
+    }
+  }
+  return best === Infinity ? 0 : best;
+}
+```
+
+`target = 4`, `nums = [1, 4, 4]`:
+
+| R adds | Sum | Action | Box after | Shortest |
+|---|---|---|---|---|
+| 1 | 1 | expand | 1 | — |
+| 4 | 5 | record 2; remove 1 → 4 | 4 | 2 |
+| | 4 | record 1; remove 4 → 0 | empty | 1 |
+| 4 | 4 | record 1; remove 4 → 0 | empty | **1** |
+
+Result: **1**.
+
+**Cost.** O(n) time, O(1) space.
+
+</Solution>
+
+<Solution problem="3. Longest Substring Without Repeating Characters">
+
+**Approach.** Maximise: valid means no character appears twice. A `Set` holds the characters in the box. Before adding `s[R]`, shrink from the left until `s[R]` is no longer in the box.
+
+**Invariant.** After the shrink loop and the add, the `Set` holds exactly the characters of `s[L..R]`, all different.
+
+```js
+function lengthOfLongestSubstring(s) {
+  const inBox = new Set();
+  let L = 0, best = 0;
+  for (let R = 0; R < s.length; R++) {
+    while (inBox.has(s[R])) {   // adding s[R] would repeat: shrink
+      inBox.delete(s[L]);
+      L++;
+    }
+    inBox.add(s[R]);            // expand
+    best = Math.max(best, R - L + 1); // valid: record after
+  }
+  return best;
+}
+```
+
+`s = "pwwkew"`:
+
+| R | Char | Shrink | Box after | Length | Longest |
+|---|---|---|---|---|---|
+| 0 | p | — | p | 1 | 1 |
+| 1 | w | — | p w | 2 | 2 |
+| 2 | w | remove p, remove w | w | 1 | 2 |
+| 3 | k | — | w k | 2 | 2 |
+| 4 | e | — | w k e | 3 | 3 |
+| 5 | w | remove w | k e w | 3 | **3** |
+
+Result: **3**.
+
+**Cost.** O(n) time: each character enters and leaves the `Set` at most once. Space O(m), where `m` is the number of distinct characters.
+
+</Solution>
+
+<Solution problem="424. Longest Repeating Character Replacement">
+
+**Approach.** Maximise. In any box, keep the most common letter and replace the rest; the replacements needed are `length − maxCount`. The box is valid when that number is at most `k`. A 26-slot array counts each uppercase letter in the box.
+
+**Invariant.** After the shrink loop, `(R − L + 1) − maxCount ≤ k` for `s[L..R]`.
+
+```js
+function characterReplacement(s, k) {
+  const count = new Array(26).fill(0);
+  const idx = (ch) => ch.charCodeAt(0) - 65; // 'A' -> 0
+  const maxCount = () => Math.max(...count); // 26 slots: constant work
+
+  let L = 0, best = 0;
+  for (let R = 0; R < s.length; R++) {
+    count[idx(s[R])]++;                          // expand
+    while ((R - L + 1) - maxCount() > k) {       // too many replacements
+      count[idx(s[L])]--;
+      L++;
+    }
+    best = Math.max(best, R - L + 1);            // valid: record after
+  }
+  return best;
+}
+```
+
+`s = "AABABBA"`, `k = 1`:
+
+| R | Adds | Box | Counts | Length − max | Action | Longest |
+|---|---|---|---|---|---|---|
+| 0 | A | A | A1 | 0 | record 1 | 1 |
+| 1 | A | AA | A2 | 0 | record 2 | 2 |
+| 2 | B | AAB | A2 B1 | 1 | record 3 | 3 |
+| 3 | A | AABA | A3 B1 | 1 | record 4 | 4 |
+| 4 | B | AABAB | A3 B2 | 2 | remove A, A → BAB (1) | 4 |
+| 5 | B | BABB | A1 B3 | 1 | record 4 | 4 |
+| 6 | A | BABBA | A2 B3 | 2 | remove B, A → BBA (1) | **4** |
+
+Result: **4** (`AABA` or `BABB`, one replacement each).
+
+**Cost.** O(n) time: at most `2n` moves, each checking 26 counts. O(1) space: the array has 26 slots whatever `n` is.
+
+</Solution>
+
+## TL;DR
+
+- Use a variable-size window when the question gives a condition and asks for the shortest or longest contiguous run.
+- R expands one step per iteration; L shrinks only when the condition says; both only move right.
+- Minimise: shrink while valid, record inside the loop. Maximise: shrink while invalid, record after it.
+- Invariant: `sum` (or the box's state) always describes exactly `nums[L..R]`, and the box is valid wherever the answer is recorded.
+- Each element enters once and leaves at most once: O(n) time, O(1) extra space.
+- Sum-based windows need non-negative values; with negatives, shrinking can throw away the right answer.

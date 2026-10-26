@@ -1,0 +1,173 @@
+---
+title: "What Data Structures and Algorithms Are"
+slug: "what-is-dsa"
+series: "dsa"
+order: 1
+date: "2026-08-25"
+draft: false
+summary: "A data structure is an arrangement of data, an algorithm is the steps taken over it, and the same search costs seven checks or one depending only on the arrangement."
+tags: ["dsa", "fundamentals", "arrays", "hashing"]
+---
+
+## Definition
+
+A **data structure** is a way of organising data, together with the operations that arrangement supports.
+An **algorithm** is a finite sequence of well-defined steps that turns an input into an output.
+
+Neither can be judged on its own. "Find a value" is neither fast nor slow until the arrangement is known, and an arrangement is neither good nor bad until it is clear what will be done with it.
+
+That pairing is why the two are always studied together.
+
+## How it works
+
+The same eight numbers each time. The same question each time: **is 74 in here?** 
+Only the arrangement changes.
+
+### Arrangement A — an unsorted array
+
+An **array** is a numbered row of slots stored next to each other, so any slot can be reached directly by its number.
+
+```
+index:   0   1   2   3   4   5   6   7
+value:  41  17  93   5  62  28  74   9
+```
+
+Nothing is known about the order, so slots are checked one at a time until 74 appears.
+
+| Step | Slot | Value | Is it 74? |
+| --- | --- | --- | --- |
+| 1 | 0 | 41 | no |
+| 2 | 1 | 17 | no |
+| 3 | 2 | 93 | no |
+| 4 | 3 | 5 | no |
+| 5 | 4 | 62 | no |
+| 6 | 5 | 28 | no |
+| 7 | 6 | 74 | **yes** |
+
+**7 checks.**
+
+### Arrangement B — a sorted array
+
+The same eight numbers, smallest to largest.
+
+```
+index:   0   1   2   3   4   5   6   7
+value:   5   9  17  28  41  62  74  93
+```
+
+Sorted order permits a shortcut. Check the middle value: if it is smaller than 74, then 74 cannot be to its left, and that entire half is eliminated without being looked at.
+
+Two markers, `low` and `high`, track the part still worth searching.
+
+| Step | low | high | Middle slot | Value | Decision |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 0 | 7 | 3 | 28 | 28 < 74, so slots 0-3 are out. `low` becomes 4 |
+| 2 | 4 | 7 | 5 | 62 | 62 < 74, so slots 4-5 are out. `low` becomes 6 |
+| 3 | 6 | 7 | 6 | 74 | found |
+
+**3 checks.**
+
+Step 1 discarded four numbers after examining one. The gain comes from the sorted order, not from a cleverer set of steps.
+
+### Arrangement C — a hash set
+
+A **hash set** decides where a value goes by running the value itself through a fixed calculation called a **hash function**. The same value always produces the same slot number.
+
+```
+74  --->  hash function  --->  slot number  --->  look in that slot
+```
+
+Nothing is searched. The value's own hash names the place it would be, and only that place is checked.
+
+**Usually 1 check.** Two different values can produce the same slot number, and when that happens the slot holds more than one value and each has to be compared.
+
+### What actually changed
+
+The numbers never changed. The question never changed. The work fell from 7 checks to 3 to 1.
+Speed was not free. Each arrangement bought its shortcut with something.
+
+| Arrangement | Checks | Paid for with |
+| --- | --- | --- |
+| Unsorted array | 7 | nothing, and nothing was gained |
+| Sorted array | 3 | the sorting, done before any search |
+| Hash set | about 1 | extra memory, and the original order |
+
+## Implementation
+
+The same question written three times.
+
+**A — unsorted array.** No assumption can be made about order, so every slot is a candidate.
+
+```js
+// Returns true if target is present. Checks slots left to right.
+function existsUnsorted(values, target) {
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === target) return true; // found at slot i
+  }
+  return false; // every slot was checked, none matched
+}
+```
+
+**B — sorted array.** Each comparison removes half of what is left.
+
+```js
+// Requires values to be sorted smallest to largest.
+// Invariant: if target is present, it lies within values[low..high].
+function existsSorted(values, target) {
+  let low = 0;
+  let high = values.length - 1;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (values[mid] === target) return true;
+    if (values[mid] < target) {
+      low = mid + 1; // mid and everything left of it is too small
+    } else {
+      high = mid - 1; // mid and everything right of it is too large
+    }
+  }
+
+  return false; // the range emptied without a match
+}
+```
+
+**C — hash set.** The value's hash names the slot, so nothing is scanned.
+
+```js
+// A JavaScript Set is a hash set. has() computes the hash and checks one slot.
+function existsHashed(set, target) {
+  return set.has(target);
+}
+```
+
+Running all three over the same eight numbers:
+
+```js
+const unsorted = [41, 17, 93, 5, 62, 28, 74, 9];
+const sorted = [5, 9, 17, 28, 41, 62, 74, 93];
+const hashed = new Set(unsorted);
+
+existsUnsorted(unsorted, 74); // true - 7 comparisons
+existsSorted(sorted, 74);     // true - 3 comparisons
+existsHashed(hashed, 74);     // true - 1 lookup
+```
+
+Two costs the code does not show. `existsSorted` is only correct if the array is already sorted, and `existsHashed` needs the set built first.
+
+Both are one-time costs, paid before any search happens. The cheap functions are cheap because work was done somewhere the function cannot see.
+
+## The invariant
+
+**Every arrangement makes some operations cheap and others expensive. None of them is cheap at everything.**
+
+The sorted array's fast lookup and its slow insert are not two separate properties. They are one property seen from two directions: keeping the order is what makes the shortcut possible, and it is what makes adding a value expensive.
+
+Choosing a data structure is choosing which operations should be fast, knowing the rest will not be.
+
+## TL;DR
+
+- A **data structure** is an arrangement of data plus the operations it supports; an **algorithm** is the steps run over it.
+- Neither can be called fast or slow in isolation. A procedure's cost is a property of the pair.
+- The same search took 7 checks in an unsorted array, 3 in a sorted array, and about 1 in a hash set.
+- Every shortcut is paid for: sorting costs work upfront, hashing costs memory and discards order.
+- No arrangement is cheap at everything, so choosing one is choosing which operations should be fast.

@@ -1,0 +1,222 @@
+---
+title: "Analysing Loops and Nested Loops"
+slug: "analysing-loops"
+series: "dsa"
+order: 3
+date: "2026-08-27"
+draft: false
+summary: "How to count the number of times a loop body runs, and why nested loops multiply while sequential loops add."
+tags: ["dsa", "complexity", "loops", "big-o"]
+---
+
+## Definition
+
+**Analysing a loop** means counting how many times its body runs, expressed in terms of the input size `n`.
+
+That count is the cost of the loop. Everything else — the comparison, the increment, the array lookup — is a fixed amount of work repeated that many times.
+
+The result is written in **Big-O notation**, which describes how the count grows as `n` grows, ignoring constants and slower-growing terms.
+
+---
+
+## How it works
+
+### A single loop
+
+```js
+for (let i = 0; i < n; i++) {
+  work();
+}
+```
+
+`i` takes every value from `0` up to `n - 1`. That is `n` values, so `work()` runs `n` times.
+
+**Cost: O(n).**
+
+---
+
+### Two loops in sequence
+
+```js
+for (let i = 0; i < n; i++) work();   // n runs
+for (let j = 0; j < n; j++) work();   // n more runs
+```
+
+The second loop starts only after the first finishes. The counts **add**: `n + n = 2n`.
+
+Constants are dropped, so this is still **O(n)**. Two full passes over the data are not a different growth shape from one pass.
+
+---
+
+### Two loops nested
+
+```js
+for (let i = 0; i < n; i++) {
+  for (let j = 0; j < n; j++) {
+    work();
+  }
+}
+```
+
+The inner loop restarts and runs to completion **for every** value of `i`. The counts **multiply**.
+
+Hand trace with `n = 4`:
+
+| `i` | inner loop runs | running total |
+|---|---|---|
+| 0 | 4 | 4 |
+| 1 | 4 | 8 |
+| 2 | 4 | 12 |
+| 3 | 4 | 16 |
+
+`4 × 4 = 16`. In general `n × n = n²`.
+
+**Cost: O(n²).**
+
+---
+
+### The triangular nested loop
+
+A common variant starts the inner loop at `i + 1` instead of `0`. This visits each unordered pair of indices exactly once, with no repeats and no index paired with itself.
+
+```js
+for (let i = 0; i < n; i++) {
+  for (let j = i + 1; j < n; j++) {
+    work();
+  }
+}
+```
+
+Both `i` and `j` are **indices**, not values. The condition `j < n` bounds the index; the array contents are irrelevant to the count.
+
+Hand trace with `n = 4` — indices are `0, 1, 2, 3`:
+
+| `i` | `j` values | count |
+|---|---|---|
+| 0 | 1, 2, 3 | 3 |
+| 1 | 2, 3 | 2 |
+| 2 | 3 | 1 |
+| 3 | — | 0 |
+| | **total** | **6** |
+
+At `i = 3` the inner loop starts at `j = 4`, which already fails `j < 4`, so the body never runs.
+
+Six iterations, not sixteen. The counts form a descending run:
+
+```
+n = 4  ->  3 + 2 + 1 + 0  = 6
+n = 5  ->  4 + 3 + 2 + 1 + 0  = 10
+n = 6  ->  5 + 4 + 3 + 2 + 1 + 0  = 15
+```
+
+---
+
+### Deriving n(n − 1) / 2
+
+Adding the run by hand takes `n` additions. Pairing collapses it to one multiplication.
+
+Write the run forwards, then backwards underneath, and add each column. For `n = 6`:
+
+```
+  5   4   3   2   1   0
++ 0   1   2   3   4   5
+------------------------
+  5   5   5   5   5   5
+```
+
+Every column sums to `5`, and there are `6` columns, so both rows together total `5 × 6 = 30`.
+
+That counted the run **twice** — once forwards, once backwards. One run is `30 / 2 = 15`, matching the hand count above.
+
+Generalising: each column sums to `n − 1`, there are `n` columns, and the result is halved.
+
+```
+total = n(n - 1) / 2
+```
+
+| n | formula | hand count |
+|---|---|---|
+| 4 | `4 × 3 / 2` = 6 | 6 |
+| 5 | `5 × 4 / 2` = 10 | 10 |
+| 6 | `6 × 5 / 2` = 15 | 15 |
+
+Expanded, `n(n − 1) / 2` is `(n² − n) / 2`. At `n = 1000` the `n²` term is 1,000,000 while `−n` removes only 1,000 — a tenth of a percent. Dropping the `− n` and the `/ 2` leaves **O(n²)**.
+
+A triangular loop does roughly half the work of a full nested loop, but both grow the same way.
+
+---
+
+### Where log n comes from
+
+Every loop above **adds** to its counter. A loop that **multiplies or divides** the counter behaves differently.
+
+```js
+for (let i = n; i > 1; i = Math.floor(i / 2)) {
+  work();
+}
+```
+
+Hand trace with `n = 16`:
+
+| iteration | `i` at start | `i > 1`? |
+|---|---|---|
+| 1 | 16 | yes |
+| 2 | 8 | yes |
+| 3 | 4 | yes |
+| 4 | 2 | yes |
+| — | 1 | stop |
+
+Four iterations for sixteen items.
+
+Doubling the input to `n = 32` gives `32 → 16 → 8 → 4 → 2 → stop`: five iterations. Doubling `n` added **one** iteration, not double the iterations.
+
+The question "how many halvings does 16 take?" is the same as "2 raised to what power is 16?" — and `2⁴ = 16`. That is exactly what `log₂(16)` means, which is why this cost is written **O(log n)**.
+
+| n | halvings | check |
+|---|---|---|
+| 8 | 3 | `2³ = 8` |
+| 16 | 4 | `2⁴ = 16` |
+| 32 | 5 | `2⁵ = 32` |
+| 1,048,576 | 20 | `2²⁰ = 1,048,576` |
+
+A million items, twenty iterations.
+
+---
+
+### Combining the rules
+
+```js
+for (let i = 0; i < n; i++) {          // outer: n times
+  for (let j = 1; j < n; j *= 2) {     // inner: log n times
+    work();
+  }
+}
+```
+
+Nested, so multiply: `n × log n`. **Cost: O(n log n).**
+
+The two rules cover most code:
+
+| Structure | Combine by | Result |
+|---|---|---|
+| Loops in sequence | adding | keep the larger term |
+| Loops nested | multiplying | the product |
+
+Sequence keeps only the larger term because the smaller one vanishes. An `O(n)` loop followed by an `O(log n)` loop at `n = 1,048,576` costs `1,048,576 + 20` — the second is invisible, so the pair is **O(n)**.
+
+---
+
+## The invariant
+
+**The cost of a loop is the number of times its body runs — nothing else.** Nested loops multiply that count, sequential loops add it, and a counter that is divided rather than decremented turns the count into `log n`.
+
+---
+
+## TL;DR
+
+- Count how many times the loop body runs; that count, in terms of `n`, is the cost.
+- Loops **in sequence add** — keep the larger term. Loops **nested multiply**.
+- A plain nested loop runs `n × n` times → **O(n²)**.
+- An inner loop starting at `i + 1` runs `(n−1) + (n−2) + … + 0` times. Pairing the run forwards with backwards gives `n(n − 1) / 2` — still **O(n²)**.
+- A counter that halves each pass runs `log₂ n` times, because `2^k = n`. Sixteen items take four passes; a million take twenty → **O(log n)**.
+- A linear loop wrapped around a halving loop is `n × log n` → **O(n log n)**.
