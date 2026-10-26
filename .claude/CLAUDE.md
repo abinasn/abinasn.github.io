@@ -1,50 +1,33 @@
 # abinasn.github.io
 
-Personal portfolio + learning hub for Abinas Patra. Deployed to GitHub Pages.
-
-## Stack
-
-- Vite 7 + React 19 + TypeScript (strict)
-- React Router 7 (`createBrowserRouter`, see `src/router.tsx`)
-- Tailwind CSS v4 (theme tokens in `src/globals.css`, no `tailwind.config`)
-- MDX notes in `content/`, compiled by `@mdx-js/rollup` with Shiki + Mermaid
-- Icons: `lucide-react`
+Portfolio + learning hub. Vite, React 19, TypeScript, Tailwind v4, MDX.
 
 ## Commands
 
-| Task | Command |
-| --- | --- |
-| Dev server (drafts visible) | `npm run dev` |
-| Typecheck | `npm run typecheck` |
-| Production build | `npm run build` |
-| Preview build | `npm run preview` |
-
-There is no test runner and no linter. `npm run build` is the check: it runs `tsc --noEmit`, `vite build`, and copies `index.html` to `404.html` for SPA routing on GitHub Pages.
+- `npm run dev` — dev server (drafts visible)
+- `npm run build` — typecheck + build. Run before committing.
 
 ## Layout
 
-| Path | What lives there |
-| --- | --- |
-| `src/pages/` | Route components (`Home`, `Hub*`, `WorkCaseStudy`, `NotFound`) |
-| `src/router.tsx` | All routes |
-| `components/<area>/` | UI grouped by feature: `ui`, `hero`, `hub`, `layout`, `work`, `contact`, `skill`, `theme` |
-| `lib/` | Data + helpers: `site.ts`, `work.ts`, `skills.ts`, `content.ts` (Node-only), `hub.ts` (browser), rehype plugins |
-| `plugins/hubContent.ts` | Vite plugin exposing `virtual:hub-posts` (post metadata) |
-| `content/<series>/**.mdx` | Hub notes. Series = `dsa`, `system-design`, `ai-ml`, `postgresql` |
-| `public/` | Static files (photo, resume PDF, favicon) |
+- `src/` — pages and router
+- `components/` — UI, grouped by feature
+- `lib/` — site data and helpers
+- `content/<series>/<topic>/<slug>.mdx` — hub notes
 
-## Deploy
+## Code
 
-- `.github/workflows/deploy.yml` builds and publishes `dist/` on push to `main`.
-- Day-to-day work happens on `develop`. Never push to `main` without being asked.
+- Named exports. One component per file.
+- Use the `@/` import alias. No `any`.
+- Colors from tokens in `src/globals.css` (`text-ink`, `bg-paper`, `text-accent`). No raw hex.
+- `lib/content.ts` uses `fs` — build time only.
 
-## Rules
+## Notes (MDX)
 
-Detailed rules live in `.claude/rules/`:
+- Series: `dsa`, `system-design`, `ai-ml`, `postgresql`. Names in kebab-case.
+- Frontmatter: `title`, `slug`, `series`, `order`, `date`, `draft`, `summary`, `tags`.
+- `##` / `###` headings only. Start with `## Definition`, end with `## TL;DR`.
+- `<Solution problem="...">` must match a `problems[].name`.
 
-- `code-style.md` — TypeScript / React conventions
-- `styling.md` — Tailwind tokens, dark mode, a11y
-- `content.md` — MDX note format and frontmatter
-- `workflow.md` — git and verification steps
+## Git
 
-Skills live in `.claude/skills/` (`new-hub-note`, `add-work-entry`, `verify-build`).
+- Work on `develop`. `main` deploys to GitHub Pages.
