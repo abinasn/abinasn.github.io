@@ -9,7 +9,7 @@ export function AnimatedHeadline({ className = "" }: { className?: string }) {
   const words = [
     ...before.split(" ").map((text) => ({ text, isAccent: false })),
     { text: accent, isAccent: true },
-    ...after.split(" ").map((text) => ({ text, isAccent: false })),
+    ...after.split(" ").filter(Boolean).map((text) => ({ text, isAccent: false })),
   ];
 
   return (

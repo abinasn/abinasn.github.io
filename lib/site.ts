@@ -40,21 +40,21 @@ export const hero = {
   avatar: { src: "/me.jpg", alt: "Abinas Patra", zoom: 1, shape: "circle" },
   name: "Abinas Patra",
   headline: {
-    before: "I design the",
-    accent: "seams",
-    after: "between systems and the people using them.",
+    before: "I've led teams, founded a company, and shipped products",
+    accent: "alone.",
+    after: "",
   },
 
   subhead:
-    "Full-stack engineer, ten years in. AI-native tools, real-time interfaces, and the quiet infrastructure underneath.",
+    "Ten years building software end to end, as staff engineer, technical lead and co-founder. AI-native products, real-time systems, and the cloud infrastructure that keeps them running.",
 
   primaryCta: { label: "See the work", href: "/#work" },
   secondaryCta: { label: "Résumé", href: contact.resume },
 
   stats: [
-    "10 yrs shipping",
-    "1,000+ users on AI tooling",
-    "5 products end to end",
+    "Staff engineer",
+    "Tech lead",
+    "Co-founder",
   ],
 } as const;
 
