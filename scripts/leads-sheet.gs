@@ -1,3 +1,5 @@
+/** @OnlyCurrentDoc */
+
 // Google Apps Script for the "Website Leads" sheet.
 // Columns: Name | Email | Message | Date
 // Deploy: Extensions → Apps Script → paste → Deploy → New deployment →
