@@ -62,12 +62,11 @@ export async function submitMessage(
   }
 
   try {
-    const response = await fetch(contact.leadsEndpoint, {
+    await fetch(contact.leadsEndpoint, {
       method: "POST",
+      mode: "no-cors",
       body: JSON.stringify(values),
     });
-    const result: { ok?: boolean } = await response.json();
-    if (!result.ok) throw new Error("Lead was not saved");
   } catch {
     return { status: "error", message: CONTACT_FAILED, values, token: prev.token };
   }
