@@ -1,14 +1,30 @@
+import type { MDXProps } from "mdx/types";
+import { lazy, Suspense, type ComponentType } from "react";
 import { Link, useParams } from "react-router";
+import { hubMdxComponents } from "@/components/hub/mdxComponents";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Tag } from "@/components/ui/Tag";
 import { findWorkEntry } from "@/lib/work";
 import { NotFound } from "./NotFound";
+
+const writeUpModules = import.meta.glob<{
+  default: ComponentType<MDXProps>;
+}>("/work/*.mdx");
+
+const writeUps = Object.fromEntries(
+  Object.entries(writeUpModules).map(([path, load]) => [
+    path.slice("/work/".length, -".mdx".length),
+    lazy(load),
+  ]),
+);
 
 export function WorkCaseStudy() {
   const { slug = "" } = useParams();
   const entry = findWorkEntry(slug);
 
   if (!entry) return <NotFound />;
+
+  const WriteUp = writeUps[entry.slug];
 
   return (
     <main className="mx-auto w-full max-w-content flex-1 px-5 py-14 md:px-14 md:py-20">
@@ -53,9 +69,17 @@ export function WorkCaseStudy() {
           ))}
         </div>
 
-        <p className="text-dim border-line mt-12 border-t pt-7 font-mono text-[12px]">
-          Full write-up in progress.
-        </p>
+        <div className="border-line mt-12 border-t pt-10">
+          {WriteUp ? (
+            <Suspense>
+              <WriteUp components={hubMdxComponents} />
+            </Suspense>
+          ) : (
+            <p className="text-dim font-mono text-[12px]">
+              Full write-up in progress.
+            </p>
+          )}
+        </div>
       </div>
     </main>
   );
