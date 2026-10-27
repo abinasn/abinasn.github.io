@@ -60,11 +60,11 @@ export const work: WorkEntry[] = [
     startDate: "2019-09-01",
     endDate: "2022-03-31",
     product: "Prabandhak",
-    headline:
-      "Translators kept retyping sentences the company had already paid for once.",
-    summary: "a translation management platform and freelancer marketplace.",
+    headline: "Translation at scale for India's languages.",
+    summary:
+      "a translation platform for 18 low-resource Indian languages, with a CAT tool, translation memory and a freelancer marketplace.",
     metrics: ["42% of words reused from memory", "3.2× faster review turnaround"],
-    stack: ["React", "Java", "Elasticsearch", "Redis"],
+    stack: ["React", "Ant Design", "Node.js", "MongoDB", "Elasticsearch"],
     sceneSubject: "taxpayer-portal-content",
     variant: "feature",
   },
