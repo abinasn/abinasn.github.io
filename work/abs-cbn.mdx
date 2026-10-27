@@ -27,12 +27,12 @@ Before BeyondCaptions, subtitlers typed every line by hand in tools like **Subti
 
 ## Architecture
 
-The platform started as a large set of small services. I rebuilt it as **two Node.js services** on **AWS ECS** that share one set of TypeScript types: one for **users and teams**, one for **projects, video and subtitles**.
+The platform runs as **two Node.js microservices** on **AWS ECS**, each made up of several modules, and both share one set of TypeScript types.
 
 ```mermaid
 flowchart LR
-    UI["Browser"] --> CORE["Core service<br/>users, teams"]
-    UI --> PROJ["Project service<br/>projects, video, subtitles"]
+    UI["Browser"] --> CORE["Core service<br/>users, teams, sessions"]
+    UI --> PROJ["Project service<br/>projects, subtitles, translations"]
     UI -->|upload| S3[(S3)]
     PROJ -->|send job| AI["AI service"]
     AI -->|job finished| PROJ
@@ -50,9 +50,9 @@ flowchart LR
 | **Live updates over WebSockets** | Progress, locks and notifications reach the browser instantly, without the page asking again and again. |
 | **One shared set of types** | The frontend and both services use the same TypeScript types, so a mismatch is caught when the code is built, not by users. |
 
-**The Core service** handles login (including company single sign-on), teams, invites, permissions, editor sessions and live notifications.
+**The Core service** handles **users, teams and sessions**.
 
-**The Project service** handles projects, video processing, subtitles, translations, guidelines, styles, watermarks and assignments.
+**The Project service** handles **projects, subtitles and translations**.
 
 Both services publish **API documentation that is generated from the code**, so the docs are always up to date.
 
@@ -70,14 +70,6 @@ Each request goes through the same layers, and each layer has one job:
 | **Service** | Holds the business rules. |
 | **Repository** | Talks to the database. Nothing else does. |
 | **Model** | Describes the shape of the data in MongoDB. |
-
-A few simple rules keep the code consistent:
-
-1. **Every response has the same shape**, whether it worked or failed.
-2. **Errors are handled in one place.** Users get a clear message, and internal details never leak out.
-3. **The same validation rules generate the API docs**, so the two can't disagree.
-4. **Only the database layer touches the database.**
-5. **No loose types.** TypeScript runs in its strictest mode.
 
 Every module uses the same folder layout, so once you know one module, you know them all. If the validation rules and the shared types ever stop matching, **the build fails** before the change can go live.
 
@@ -137,41 +129,7 @@ Each step works the same way. It marks itself as *running*, does its work, saves
 
 Retry only runs the step that failed. Finished steps are never repeated, so a failure at the end doesn't mean processing the whole video again. That's why **fewer projects fail for good**: a network blip or a server restart becomes one click on *Retry* instead of a new upload.
 
-## Hard problem 2: waiting for the AI
-
-The AI can take longer than the video itself to finish. Instead of keeping a connection open the whole time, the Project service sends the job and moves on. The AI calls back when it's done. This callback is called a **webhook**.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant UI as Browser
-    participant P as Project service
-    participant S3
-    participant AI as AI service
-
-    UI->>P: Create project
-    P-->>UI: Created (processing started)
-    P->>S3: Save audio
-    P->>AI: Start job (where the audio is)
-    AI-->>P: Job id
-    Note over P: Pauses. Nothing is held open.
-    AI->>S3: Read audio, save text
-    AI->>P: Job finished (job id, status)
-    alt Success
-        P->>P: Continue with the next steps
-        P-->>UI: Live progress updates
-    else Failed
-        P->>P: Mark the step as failed
-        P-->>UI: Show Retry
-    end
-```
-
-- **Files stay in S3.** The AI reads the audio and writes the text in S3 directly, so big files never travel between services.
-- **A job id links everything.** The AI's job id is saved on the project, so the callback finds the right project.
-- **A callback can't run twice.** If the project is already done, a repeated callback is ignored.
-- **Waiting costs nothing.** While the AI works, the project is just a saved record. The service can even restart without losing anything.
-
-## Hard problem 3: heavy work without slowing down
+## Hard problem 2: heavy work without slowing down
 
 | Problem | Solution |
 | --- | --- |
@@ -199,7 +157,7 @@ Reusable parts keep the whole app consistent:
 
 Small details that matter: progress updates appear **live**; opening a second tab is blocked so two tabs can't fight over one session; and the session is closed properly even when the tab is closed.
 
-## Hard problem 4: the subtitle editor
+## Hard problem 3: the subtitle editor
 
 The editor is where subtitlers spend their day. It shows the **video, waveform, timeline, subtitle preview and the list of subtitles**, all kept in perfect sync, while saving every change and letting several people work on one project.
 
@@ -312,9 +270,8 @@ The key idea: **a project is also its own source-language job.** Translations ar
 
 ## Highlights
 
-- Rebuilt the backend into **two clean Node.js services** with one shared set of types and docs generated from the code.
+- **Two Node.js microservices** with clear modules, one shared set of types and docs generated from the code.
 - A **5-step video pipeline** that shows live progress and **resumes from the failed step**.
-- **AI jobs handled with webhooks**, so long jobs never block anything.
 - **About 3× faster video processing**, while keeping the app responsive.
 - A **professional subtitle editor in the browser**, with video, waveform and subtitles kept in sync by one shared clock.
 - **Autosave that survives bad internet**, with undo and redo.
