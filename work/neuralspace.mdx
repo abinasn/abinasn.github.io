@@ -1,6 +1,6 @@
 ## What it is
 
-**StorytellerAI** is a creative AI companion. It works like the OpenAI Playground, but built around **your own AI assistants**, called **storytellers**, that help writers and creators with ideas, scripts, images and music.
+**StorytellerAI** is a creative AI companion. It works like the OpenAI Playground, but built around **your own AI assistants**, called **storytellers**, that help creators with ideas, scripts, images and music. It's made for **podcasters, scriptwriters, makeup artists, marketers** and any creative professional who wants to work faster while keeping their own voice.
 
 You can create **as many storytellers as you need**, each with its own:
 
@@ -82,13 +82,14 @@ Generated images and music are saved to **Azure Blob Storage**, so they stay wit
 
 ## The storyboard
 
-Long chats are a poor place to build a story. So any message can be **bookmarked** and added to the **storyboard**: an **infinite canvas** built with **React Flow**.
+Long chats are a poor place to build a story. So any reply can be **bookmarked** and added to the **storyboard**: an **infinite canvas** I built with **React Flow**.
 
-- Each piece (text, image or music) becomes a **node** on the canvas.
-- Nodes can be **moved, grouped and connected** to show how the story flows.
-- The canvas can be **zoomed and panned** freely, so a story of any size fits.
+- The storyboard holds three kinds of blocks: **messages**, **images** and **music**. Each one keeps the time it was created.
+- Blocks can be **connected** to outline the story's timeline, scene by scene.
+- Message blocks can be **edited**, images can be **viewed** full size, music can be **played** right on the canvas, and any block can be **removed**.
+- Storyboards can be **shared with the team**, so everyone can contribute to the same story.
 
-The result is one place where the ideas from many conversations turn into a single, organised story.
+The result is one place where ideas from many conversations turn into a single, organised story.
 
 ## Infrastructure
 
