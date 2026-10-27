@@ -1,0 +1,20 @@
+## What it was
+
+Tripborn sold bus tickets to travel agents. Ticket prices came from several providers (**Redbus**, **Ticketgoose**, **Travelyaari** and **Abhibus**), and agents had to check each one separately to find the best fare.
+
+## What I did
+
+I built an **API aggregator** in **Node.js** and **MongoDB** that searched all four providers at once and combined the results into one list, with the **lowest price shown first**.
+
+- Each provider returned data in its own format, so every response was converted into one common shape.
+- **Redis caching** kept popular routes fast, so repeat searches didn't hit every provider again.
+- **Rate limiting** and **JWT authentication** protected the API.
+- The code followed **object-oriented design** and **SOLID principles**, so adding a new provider meant adding one small module.
+
+## Result
+
+Agents searched once instead of four times. Search time dropped by about **75%**, and bookings went up by about **30%**.
+
+## Stack
+
+Node.js, MongoDB, Redis and AWS.

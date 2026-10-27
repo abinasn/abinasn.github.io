@@ -19,25 +19,24 @@ const BEATS = [
 
 const SPEED = 4.2;
 
-const PROVIDERS = [
-  { name: "gds-alpha", ms: 142 },
-  { name: "gds-beta", ms: 365 },
-  { name: "ota-delta", ms: 800, fail: true },
-  { name: "lcc-direct", ms: 86 },
-  { name: "consolidator", ms: 210 },
+const PROVIDERS: { name: string; ms: number; fail?: boolean }[] = [
+  { name: "abhibus", ms: 86 },
+  { name: "redbus", ms: 142 },
+  { name: "ticketgoose", ms: 210 },
+  { name: "travelyaari", ms: 365 },
 ];
 
 const FARES: Record<string, { price: string; route: string; note: string }> = {
-  "lcc-direct": { price: "₹4,820", route: "06:10 → 08:55", note: "non-stop · 2h 45m" },
-  "gds-alpha": { price: "₹5,140", route: "09:20 → 12:05", note: "non-stop · 2h 45m" },
-  consolidator: { price: "₹4,290", route: "21:35 → 00:30", note: "non-stop · 2h 55m" },
-  "gds-beta": { price: "₹4,510", route: "14:05 → 16:50", note: "non-stop · 2h 45m" },
+  abhibus: { price: "₹1,240", route: "21:30 → 06:45", note: "AC sleeper · 9h 15m" },
+  redbus: { price: "₹1,320", route: "22:00 → 07:30", note: "AC sleeper · 9h 30m" },
+  ticketgoose: { price: "₹1,050", route: "20:45 → 06:15", note: "AC seater · 9h 30m" },
+  travelyaari: { price: "₹1,180", route: "23:15 → 08:20", note: "AC sleeper · 9h 05m" },
 };
 
 const PROVIDERS_WHEN_NARROW = 3;
 
-const SORTED = ["consolidator", "gds-beta", "lcc-direct", "gds-alpha"];
-const ARRIVAL = ["lcc-direct", "gds-alpha", "consolidator", "gds-beta"];
+const SORTED = ["ticketgoose", "travelyaari", "abhibus", "redbus"];
+const ARRIVAL = ["abhibus", "redbus", "ticketgoose", "travelyaari"];
 
 export function TripbornScene({ active }: SceneProps) {
   const { at, cycle, still } = useSceneTimeline(BEATS, active, { hold: 2800 });
