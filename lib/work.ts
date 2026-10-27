@@ -26,8 +26,7 @@ export const work: WorkEntry[] = [
     startDate: "2025-01-01",
     endDate: null,
     product: "BeyondCaptions",
-    headline:
-      "Subtitling a video used to take a full afternoon. Now it takes minutes.",
+    headline: "Subtitles in minutes, not hours.",
     summary:
       "an AI-assisted subtitle, transcription and translation platform with a collaborative browser-based editor.",
     metrics: ["88% first-pass accuracy", "sole engineer, architecture to production"],
