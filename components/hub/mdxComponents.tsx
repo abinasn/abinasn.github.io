@@ -107,6 +107,15 @@ export const hubMdxComponents = {
       {...props}
     />
   ),
+  img: ({ alt = "", ...props }: React.ComponentProps<"img">) => (
+    <img
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className="border-line my-5.5 block h-auto w-full rounded-xl border"
+      {...props}
+    />
+  ),
   hr: (props: React.ComponentProps<"hr">) => (
     <hr className="border-line my-10" {...props} />
   ),
