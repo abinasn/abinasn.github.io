@@ -1,6 +1,6 @@
 import { Contact } from "@/components/contact/Contact";
 import { Hero } from "@/components/hero/Hero";
-import { HowIBuild } from "@/components/skill/HowIBuild";
+import { Skills } from "@/components/skill/Skills";
 import { WorkTimeline } from "@/components/work/WorkTimeline";
 
 export function Home() {
@@ -8,7 +8,7 @@ export function Home() {
     <main className="flex-1">
       <Hero />
       <WorkTimeline />
-      <HowIBuild />
+      <Skills />
       <Contact />
     </main>
   );

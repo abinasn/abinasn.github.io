@@ -7,6 +7,7 @@ export type WorkEntry = {
   startDate: string;
   endDate: string | null;
   product: string;
+  shortName?: string;
   headline: string;
   summary: string;
   metrics: string[];
@@ -80,6 +81,7 @@ export const work: WorkEntry[] = [
     startDate: "2018-10-01",
     endDate: "2019-09-30",
     product: "Bus Ticket Aggregator",
+    shortName: "Tripborn",
     headline: "One search for bus tickets across four providers.",
     summary:
       "a service that searched four bus ticket providers at once and showed the lowest price first.",
@@ -112,6 +114,7 @@ export const work: WorkEntry[] = [
     startDate: "2015-08-01",
     endDate: "2016-12-31",
     product: "Continental Portal",
+    shortName: "Capgemini",
     headline: "My first job: improving an enterprise portal.",
     summary:
       "an SAP Enterprise Portal used by internal teams at a global tyre manufacturer.",

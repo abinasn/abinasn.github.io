@@ -69,8 +69,8 @@ export const workSection = {
 } as const;
 
 export const skillSection = {
-  eyebrow: "How I build",
-  lead: "I start from a requirement and a whiteboard sketch.",
+  eyebrow: "Skills",
+  lead: "What I work with, and where I've used it.",
   note: "Sharpening system design and data structures in the open",
   cta: { label: "see the hub", href: "/hub" },
 } as const;
