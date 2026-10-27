@@ -43,9 +43,9 @@ export const work: WorkEntry[] = [
     startDate: "2022-02-01",
     endDate: "2025-01-31",
     product: "StorytellerAI",
-    headline: "Your own AI assistant, from first idea to finished story.",
+    headline: "Your own AI storytellers, from first idea to finished story.",
     summary:
-      "a workspace to build your own AI assistant, chat with it, and turn the best ideas into a storyboard.",
+      "a creative AI companion: build your own storytellers, chat with them, and generate images and music.",
     metrics: ["1,000+ users", "85% faster, per beta testers"],
     stack: ["React", "React Flow", "Node.js", "OpenAI", "Azure"],
     sceneSubject: "the-heist-graphic-novel",

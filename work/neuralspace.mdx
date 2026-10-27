@@ -1,18 +1,19 @@
 ## What it is
 
-**StorytellerAI** lets anyone build **their own AI assistant** and use it to create stories, much like the OpenAI Playground but built around your own content.
+**StorytellerAI** is a creative AI companion. It works like the OpenAI Playground, but built around **your own AI assistants**, called **storytellers**, that help writers and creators with ideas, scripts, images and music.
 
-You create a **project** and teach the assistant what it needs to know:
+You can create **as many storytellers as you need**, each with its own:
 
-- **Instructions:** how the assistant should behave and respond.
-- **Personas:** the voice and character it should speak in.
-- **Knowledge base:** files, public web pages and other resources it should learn from.
+- **Name and persona:** who the storyteller is, for example *"Jacob, a writer who loves making up mystery stories"*.
+- **Genre and style:** fantasy and concise, mystery and descriptive, horror and emotional, and so on.
+- **Instructions:** how it should behave and respond.
+- **Knowledge base:** documents, PDFs, videos, voice notes, images and public links it should learn from.
 
-Then you **chat** with the assistant, and it answers using everything you gave it. Along the way you can **generate images and music**, **bookmark** the best answers, and arrange them on a **storyboard**: an infinite canvas where the story comes together.
+Then you **chat** with your storyteller, and it answers using everything you gave it. Every reply can be **bookmarked, copied, regenerated** or **turned into images**. You can also **generate music**, and collect the best pieces on a **storyboard**: an infinite canvas where the story comes together.
 
 ```
-Create project → add instructions, personas and knowledge → chat with the assistant
-              → generate images and music → bookmark the best parts → build the storyboard
+Create a storyteller → add persona, instructions and knowledge → chat
+                     → generate images and music → bookmark the best parts → build the storyboard
 ```
 
 ## Why it exists
@@ -21,8 +22,9 @@ General AI chat tools don't know your world. Every conversation starts from zero
 
 | Problem | How StorytellerAI solves it |
 | --- | --- |
-| The AI doesn't know your story, brand or world | A **knowledge base** per project, built from your files and links, so every answer uses your material. |
-| Tone and style change from chat to chat | **Instructions and personas** are saved with the project and applied to every conversation. |
+| The AI doesn't know your story, brand or world | A **knowledge base** per storyteller, built from your documents, videos, voice notes, images and links. |
+| Tone and style change from chat to chat | **Personas, genres and instructions** are saved with each storyteller and applied to every conversation. |
+| One assistant can't master every genre | Create **many storytellers**, each with its own persona, purpose and style. |
 | Text alone isn't enough for creative work | **Image and music generation** sit right next to the chat. |
 | Good ideas get lost in long conversations | **Bookmark** any message and place it on the **storyboard**. |
 | Ideas need structure to become a story | The **storyboard** is an infinite canvas where pieces can be arranged and connected. |
@@ -33,7 +35,7 @@ StorytellerAI uses the same stack as BeyondCaptions: **React and TypeScript** on
 
 ```mermaid
 flowchart LR
-    UI["Browser<br/>chat, storyboard"] --> API["Node.js services<br/>on Kubernetes"]
+    UI["Browser<br/>storytellers, chat, storyboard"] --> API["Node.js services<br/>on Kubernetes"]
     API --> DB[(MongoDB)]
     API --> BLOB[(Azure Blob Storage)]
     API -->|knowledge, chat| OAI["OpenAI"]
@@ -43,9 +45,9 @@ flowchart LR
 
 | Part | What it does |
 | --- | --- |
-| **React app** | The chat, the project settings and the storyboard canvas. |
-| **Node.js services** | Projects, knowledge bases, chats, generations and storyboards. |
-| **MongoDB** | Stores projects, personas, instructions, chats, bookmarks and storyboards. |
+| **React app** | The storyteller settings, the chat and the storyboard canvas. |
+| **Node.js services** | Storytellers, knowledge bases, chats, generations and storyboards. |
+| **MongoDB** | Stores storytellers, personas, instructions, chats, bookmarks and storyboards. |
 | **Azure Blob Storage** | Keeps uploaded files and generated images and music. |
 | **OpenAI** | Powers the assistant: the knowledge base search and the chat replies. |
 | **Midjourney and Suno AI** | Generate images and music from the story. |
@@ -70,12 +72,13 @@ flowchart LR
 
 ## Images and music
 
-Next to the chat, you can turn the story into visuals and sound:
+Text alone isn't enough for creative work, so visuals and sound sit right next to the chat.
 
-- **Images** are generated with **Midjourney**.
-- **Music** is generated with **Suno AI**.
+**Images** are generated with **Midjourney**. Any reply can be turned into images with one click, and users can create **characters, scenes, costumes and hairstyles**. A **character consistency** feature keeps the same character looking the same across many images, which matters when you're building a story.
 
-Generated files are saved to **Azure Blob Storage**, so they stay with the project and can be placed on the storyboard.
+**Music** is generated with **Suno AI**. Users describe the song they want, and the AI creates it, **complete with lyrics**. They can also use **their own lyrics**, pick any genre or style, or create **instrumental tracks**, like a background score for a trailer.
+
+Generated images and music are saved to **Azure Blob Storage**, so they stay with the storyteller and can be downloaded or placed on the storyboard.
 
 ## The storyboard
 
