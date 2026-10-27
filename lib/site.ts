@@ -28,7 +28,7 @@ export const contact = {
     "https://script.google.com/macros/s/AKfycbx7frhyFVBfXRZ9PbjiPkzrA_ZGcwLwDjYig6N1f7N3_X66AWA5naOfGQXl0uVbJsK7uw/exec",
 } as const;
 
-export const wordmark = "abinasp";
+export const wordmark = "abinasn";
 
 export const nav = [
   { label: "Work", href: "/#work" },
