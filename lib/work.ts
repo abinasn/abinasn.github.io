@@ -28,9 +28,10 @@ export const work: WorkEntry[] = [
     product: "BeyondCaptions",
     headline:
       "Subtitling a video used to take a full afternoon. Now it takes minutes.",
-    summary: "an AI subtitle and transcription platform for media teams.",
+    summary:
+      "an AI-assisted subtitle, transcription and translation platform with a collaborative browser-based editor.",
     metrics: ["88% first-pass accuracy", "sole engineer, architecture to production"],
-    stack: ["React", "Node.js", "MongoDB", "AWS ECS"],
+    stack: ["TypeScript", "React", "Node.js", "MongoDB", "AWS ECS"],
     sceneSubject: "campaign-launch-video",
     variant: "feature",
   },
