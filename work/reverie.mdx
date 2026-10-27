@@ -21,7 +21,7 @@ Translating into Indian languages is harder than it looks. Good tools for low-re
 | The same sentences get translated again and again | **Translation memory** finds past translations and reuses them. |
 | Mistakes slip through in low-resource languages | **Spell and grammar checks** built for these languages. |
 | Managing many translators is hard | **Teams, members and assignments** in one place. |
-| Finding the right translator takes time | A **marketplace** where thousands of freelancers can bid on projects. |
+| Finding the right translator takes time | A **marketplace** where 5,000+ freelancers can bid on projects. |
 
 ## Architecture
 
@@ -79,7 +79,7 @@ Because every file becomes the same kind of segments, the rest of the platform n
 
 ## The CAT tool
 
-I built the **CAT tool** (computer-assisted translation), the editor where translators spend their day. It shows each segment in the original language next to its translation, and gives translators the help they need right where they type:
+As technical lead, I led a team of **4 developers and 2 testers**, and built the **CAT tool** (computer-assisted translation), the editor where translators spend their day. It shows each segment in the original language next to its translation, and gives translators the help they need right where they type:
 
 - **Swalekh keyboard:** Reverie's keyboard for typing quickly in Indian languages.
 - **Spell correction and grammar checks** designed for low-resource languages.
@@ -101,11 +101,11 @@ flowchart LR
     T -->|save| ES[(Elasticsearch)]
 ```
 
-Every approved translation is saved in **Elasticsearch**. When a new segment arrives, Prabandhak **searches the memory first**. If the same text was already translated, it's reused right away. Only new text goes to the machine translation engine. This saves time, cuts cost, and keeps translations consistent across projects.
+Every approved translation is saved in **Elasticsearch**. When a new segment arrives, Prabandhak **searches the memory first**, using custom string matching to find the closest past translation. If the same text was already translated, it's reused right away. Only new text goes to the machine translation engine. This saves time, cuts cost, and keeps translations consistent across projects.
 
 ## Additional features
 
-Prabandhak also includes its own **project management**: users can create a **team**, add members and **assign projects** to them. **Automated workflows** take care of file handling, task assignment and quality checks, and **reports and analytics** show how each project and translator is doing, including turnaround time. For finding new talent, a **marketplace** lets project owners post work where **thousands of linguistic freelancers and language service providers** can place bids, and then pick the right person by comparing bids against their own criteria.
+Prabandhak also includes its own **project management**: users can create a **team**, add members and **assign projects** to them. **Automated workflows** take care of file handling, task assignment and quality checks, and **reports and analytics** show how each project and translator is doing, including turnaround time. For finding new talent, a **marketplace** lets project owners post work where **5,000+ linguistic freelancers** and language service providers can place bids, and then pick the right person by comparing bids against their own criteria.
 
 ## Infrastructure
 
@@ -115,8 +115,9 @@ Prabandhak also includes its own **project management**: users can create a **te
 
 ## Results
 
-- **42% of words reused** from translation memory.
-- **3.2× faster** review turnaround.
+- **70% more efficient** translators, thanks to the translation memory.
+- **5,000+ freelance translators** joined the marketplace.
+- Led a team of **4 developers and 2 testers**.
 
 ## Stack
 

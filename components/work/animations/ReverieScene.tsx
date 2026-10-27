@@ -70,9 +70,9 @@ const LANGUAGES = ["हिन्दी", "বাংলা", "தமிழ்", "
 const REST = [0, 2, 3];
 
 const STATS = [
-  { label: "Reused from TM", value: "42%", tail: "of words" },
+  { label: "Translator efficiency", value: "70%", tail: "higher" },
   { label: "Glossary adherence", value: "100%", tail: "terms" },
-  { label: "Review turnaround", value: "3.2×", tail: "faster" },
+  { label: "Marketplace", value: "5,000+", tail: "freelancers" },
 ];
 
 export function ReverieScene({ active }: SceneProps) {
