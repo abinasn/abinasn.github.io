@@ -18,7 +18,7 @@ export const tracks = [
   {
     id: "ai-ml",
     name: "AI / ML",
-    blurb: "Working notes on shipping with models rather than training them.",
+    blurb: "Working notes on machine learning, from training models to putting them to work.",
   },
   {
     id: "postgresql",
